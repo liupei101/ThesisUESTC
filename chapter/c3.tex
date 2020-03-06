@@ -103,13 +103,13 @@ $$
 
 \begin{theorem}\label{thm:1.3}
 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
-\frac{\partial \alpha}{\partial \hat{y}_t^k}=\alpha^{'}
+\frac{\partial \alpha}{\partial \hat{y}_t^k}=\alpha^{'}=
 \begin{cases}
 I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)} + \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 1,\\
 \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 0.
 \end{cases}
 $$ 且$L_2$项分子$\beta$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
-\frac{\partial \beta}{\partial \hat{y}_t^k}=\beta^{'}
+\frac{\partial \beta}{\partial \hat{y}_t^k}=\beta^{'}=
 \begin{cases}
 \frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} + \frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 1,\\
 \frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 0.
@@ -149,7 +149,7 @@ $$ 其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^
 \frac{\partial^2 L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial^2 L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \tau(\alpha, \beta)
 $$ 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
 
-在实现HitBoost生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率且缩短了模型拟合时间。具体实现可以参考源代码https://github.com/liupei101/libsurv。
+在实现HitBoost生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率且缩短了模型拟合时间。具体实现可以参考源代码\emph{https://github.com/liupei101/libsurv}。
 
 \section{实验生存数据集}
 
