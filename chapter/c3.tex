@@ -153,23 +153,195 @@ $$ 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\
 
 \section{实验生存数据集}
 
-在实验评估提出生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件，样本量，数据特征数目，事件占比，观测时间最小值，观测时间中位数和观测时间最大值几个方面观察了数据，统计结果如下表1。Kaplan-Meier方法对各个数据集的估计生存曲线如图2所示，可以直观看出SUPPORT数据集中总体的生存状况相对而言是最差的，同时观测时间最短，而METABRIC数据集中总体的生存状态最好，同时观测时间最长。
+在实验评估提出生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件，样本量，数据特征数目，事件占比，观测时间最小值，观测时间中位数和观测时间最大值几个方面观察了数据，统计结果如下表\ref{table01}所示。Kaplan-Meier方法对各个数据集的估计生存曲线如图\ref{pic02}所示。从图中我们可以直观看出SUPPORT数据集中总体的生存状况相对而言是最差的，同时观测时间最短，而METABRIC数据集中总体的生存状态最好，同时观测时间最长。
+
+\begin{table}[h]
+\caption{生存数据集的基本情况}
+\begin{tabular}{cccccccc}
+\toprule
+\multirow{2}{*}{数据集} & \multirow{2}{*}{研究事件} & \multirow{2}{*}{样本量} & \multirow{2}{*}{特征数目} & \multirow{2}{*}{事件占比} & \multicolumn{3}{c}{观测时间 (月)} \\ \cline{6-8} 
+&  &  &  &  & 最小值 & 中位数 & 最大值 \\ 
+\midrule
+WHAS & 急性心脏病生存 & 1638 & 5 & 42.12\% & 1 & 40 & 67 \\
+SUPPORT & 重病住院患者生存 & 8873 & 14 & 68.03\% & 1 & 8 & 68 \\
+METABRIC & 乳腺癌患者生存 & 1903 & 9 & 57.96\% & 1 & 115 & 356 \\
+ROTT2 & 乳腺癌患者生存 & 2982 & 9 & 42.66\% & 2 & 87 & 232 \\
+\bottomrule
+\end{tabular}
+\label{table01}
+\end{table}
+
+\begin{figure}[h]
+\includegraphics[width=0.9\textwidth]{pic02.png}
+\caption{数据集的生存曲线}
+\label{pic02}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics[width=0.95\textwidth]{pic03.png}
+\caption{WHAS数据集生存曲线}
+\label{pic03}
+\end{figure}
 
 \subsection{WHAS}
 
+WHAS \citing{Hosmer2000Applied}（Worcester Heart Attack Study）数据集收集了1638名心脏病患者，主要研究是否发生急性心肌梗塞（AMI），及相关的影响因素。数据集中主要包含5个患者信息：年龄，性别，BMI，是否有左心衰竭并发症，心肌梗塞等级。在长达67个月的随访中，有42.12\%的患者发生了急性心肌梗塞导致的死亡。全部的观测个体中，观测时间最大的是67个月，观测时间最小的是1个月，观测时间中位数是40个月。
+
+由Kaplan-Meier方法估计的WHAS数据集的生存曲线（生存函数）及各个时间点仍处于观测期的人数如图\ref{pic03}所示。从图中可以看出，随着观测时间的增长，WHAS数据集中急性心肌梗塞的存活率呈线性下降的趋势。
+
 \subsection{SUPPORT}
+
+SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcomes and Risks of Treatment）数据集大规模地收集了重病住院的成年人的数据，主要研究该类型患者的生存状态及影响因素。该数据集共有9015名患者，对应信息有14个：年龄，性别，种族，并发症数量，是否糖尿病，是否痴呆症，是否癌症，平均动脉血压，心率，呼吸频率，体温，白细胞数量，血清钠含量和血清肌酐含量。
+
+\begin{figure}[H]
+\includegraphics[width=0.95\textwidth]{pic04.png}
+\caption{SUPPORT数据集生存曲线}
+\label{pic04}
+\end{figure}
+
+在排除了存在未知信息的个体后，我们总共收集了符合规范的8873名患者数据，其中68.03\%的患者在观测期间出现了死亡。这些患者的观测时间的最小值，中位数，和最大值分别是1个月，8个月和68个月。由Kaplan-Meier方法估计的SUPPORT数据集的生存曲线（生存函数）及各个时间点仍处于观测期的人数如图\ref{pic04}所示。从图中可以看出，SUPPORT数据集中的重病住院患者的生存率在前5个月出现急剧下降，而后面下降趋势较为平稳，形状类似于与x轴对称的log曲线。
 
 \subsection{METABRIC}
 
+METABRIC \citing{Curtis2012The}（Molecular Taxonomy of Breast Cancer International Consortium）数据主要研究基因和蛋白质的表达信息对乳腺癌患者生存的影响，从而辅助医生制定更好的治疗方案。在原始的包含1980名乳腺癌患者的数据集中去除存在不完整信息的个体后，我们最终收集了1903名乳腺癌患者的数据，死亡率为57.96\%。
+
+\begin{figure}[H]
+\includegraphics[width=0.95\textwidth]{pic05.png}
+\caption{METABRIC数据集生存曲线}
+\label{pic05}
+\end{figure}
+
+和\cite{Katzman2018DeepSurv}中的做法一样，我们也保留了原始数据中的9个特征：基因MKI67，EGFR，PGR，ERBB2，雌性激素受体状态，是否放疗，是否化疗，ER状态，诊断时年龄。数据集中1903名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是1个月，115个月和356个月。由Kaplan-Meier方法估计的METABRIC数据集的生存曲线（生存函数）及各个时间点仍处于观测期的人数如图\ref{pic05}所示。从图中可以看出，METABRIC数据集中乳腺癌患者的生存率的下降趋势和WHAS数据集一样，与观察时间呈线性关系。
+
 \subsection{ROTT2}
+
+ROTT2 \citing{Foekens2000The}（Rotterdam Tumor Bank）数据使用病人的病理和治疗信息来研究乳腺癌生存。它随访了2982名经过了初次手术的女性乳腺癌患者，其中42.66\%的乳腺癌患者在随访的过程中出现了死亡。
+
+\begin{figure}[H]
+\includegraphics[width=0.95\textwidth]{pic06.png}
+\caption{ROTT2数据集生存曲线}
+\label{pic06}
+\end{figure}
+
+数据中收集的临床信息有9个：年龄，绝经状态，肿瘤大小，肿瘤分级，阳性淋巴细胞个数，PR，ER，是否激素治疗，是否化疗。数据集中2982名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是2个月，87个月和232个月。由Kaplan-Meier方法估计的ROTT2数据集的生存曲线（生存函数）及各个时间点仍处于观测期的人数如图\ref{pic06}所示。从图中可以看出，ROTT2数据集中乳腺癌患者的生存率在前200个月都呈线性下降，观察期后部分基本维持平稳。
+
+\subsection{数据处理}
+
+在完成公开数据集的整体情况统计后，我们将数据集划分为训练集和独立测试集分别用于后续的模型训练和模型性能评估。具体地，我们采用随机划分的方式将各个数据集按照8:2的比例划分为训练集和测试集，同时使用统计方法检验随机划分后数据的分布是否一致。连续变量使用KS检验，离散变量使用卡方检验，而生存状态的差异性检验采用log-rank检验 \citing{Kalbfleisch1986The}。log-rank检验的原假设是两个人群生存状态服从同一个分布。表\ref{table02}给出了各个数据集划分出的训练集和测试集的统计情况，表\ref{table02}中P值给出的是对一个数据集划分出的训练数据和测试数据实施log-rank检验的结果。从结果上可以看出，各个数据集的训练集和测试集在生存状态上无显著差异（P>0.05）。
+
+\begin{table}[h]
+\caption{训练集和测试集的基本情况}
+\begin{tabular}{cccccc}
+\toprule
+\multirow{2}{*}{数据集} & \multicolumn{2}{c}{训练集} & \multicolumn{2}{c}{测试集} & \multirow{2}{*}{P值} \\ \cline{2-5} & 样本量       & 事件占比        & 样本量       & 事件占比        & \\ 
+\midrule
+WHAS                 & 1310      & 42.14\%     & 328       & 42.07\%     & 0.8632              \\ 
+SUPPORT              & 7098      & 67.95\%     & 1775      & 68.34\%     & 0.9605              \\ 
+METABRIC             & 1522      & 58.54\%     & 381       & 55.64\%     & 0.5091              \\ 
+ROTT2                & 2385      & 42.73\%     & 597       & 42.38\%     & 0.9959              \\ 
+\bottomrule
+\end{tabular}
+\label{table02}
+\end{table}
 
 \section{实验结果}
 
 \subsection{实验设置}
+为了测试HitBoost生存分析方法的性能，我们在四个公开生存数据集上对比了生存分析中常用的方法。由于HitBoost方法不再遵循任何对个体风险函数的假设，目的在于使用多输出的梯度提升树建立个体风险函数与协变量之间潜在的关系，所以我们将其与以下方法进行对比：
+\begin{itemize}
+  \item CoxPH，经典的Cox比例风险模型，遵循风险比例假设；
+  \item CoxBoost，使用Boosting方法优化CoxPH模型，遵循风险比例假设；
+  \item ThresReg，经典的FHT模型，遵循风险函数为维纳过程的假设；
+  \item RSF，常用的基于随机森林的生存预测方法，不再遵循任何先验假设。
+\end{itemize}
+我们借助相关软件包实现了这些对比方法，其中CoxPH方法来自Python包lifelines \citing{lifelines}，CoxBoost方法来自R包mboost \citing{mboost}，ThresReg方法来自R包threg \citing{threg}，RSF方法来自R包randomForestSRC \citing{rfsrc}。
+
+\begin{table}[h]
+\caption{模型超参数搜索空间}
+\begin{tabular}{ccccc}
+\toprule
+超参数 & 范围 & 步长 & 数目 & 含义 \\ 
+\midrule
+eta & [0.01, 0.10] & 0.01 & 10 & 学习率 \\
+nrounds & [80, 200] & 10 & 13 & 迭代次数 \\
+max\_depth & [2, 6] & 1 & 5 & 最大树深度 \\
+min\_child\_weight & [0.0, 2.0] & - & - & 最小孩子节点权重 \\
+subsample & [0.4, 1.0] & 0.1 & 7 & 行随机抽样比 \\
+colsample\_bytree & [0.4, 1.0] & 0.1 & 7 & 列随机抽样比 \\
+reg\_lambda & [0.0, 1.0] & - & - & 正则化参数 \\
+reg\_gamma & [0.0, 1.0] & - & - & 正则化参数 \\
+$\gamma$ & [0.0, 1.0] & - & - & $L_2$项中凸函数$\phi$的参数 \\
+$\theta$ & [0.5, 1.0] & 0.05 & 11 & $L_1$项系数 \\
+\bottomrule
+\end{tabular}
+\label{table03}
+\end{table}
+
+模型训练所使用的超参数是通过贝叶斯超参数优化方法 \citing{Bergstra2013hpopt}得到的。我们在各个数据集的训练集上使用10折交叉验证来评估每一组搜索超参数的好坏，HitBoost模型在各个数据集上的贝叶斯超参数搜索过程如图\ref{pic07}所示。图中横坐标表示当前搜索次数，纵坐标表示当前搜索的超参数组合对应的模型性能，红色实心点表示最佳参数搜索点。HitBoost模型的超参数除了包括$\theta$，$\gamma$，$n$以外，还包括XGBoost框架原有的超参数集合。超参数$n$默认被设置为2，其余的超参数搜索空间如表\ref{table03}所示，其中超参数min\_child\_weight, reg\_lambda，reg\_gamma和$\gamma$在服从均匀分布的条件下进行随机搜索。各个数据集上超参数搜索得到的最佳超参数组合将被用于最终的模型训练。
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{pic07.png}
+\caption{HitBoost模型贝叶斯超参数搜索过程}
+\label{pic07}
+\end{figure}
 
 \subsection{模型性能}
 
+在完成上述的贝叶斯超参数优化后，我们使用参数优化的结果在各个数据集的训练集上训练了HitBoost模型，然后在独立的测试集上使用一致性指数评估了两个模型的预测性能。由于HitBoost模型主要预测首次发生事件时间的概率分布，所以我们需要使用时间依赖的一致性指数（如式\eqref{F14}所示）指标来评估该模型的性能。而对于一类预测风险比例的模型，由于风险函数$h(t)$转化为首次发生事件时间的累积分布函数$F(t)$后，对于任何个体$i$，式 \eqref{F13}中计算一致性指数的预测风险$\hat{R}_i$与式 \eqref{F14}中计算时间依赖一致性指数的预测风险$\sum_{t<T_i} \hat{y}_t^i$ 在任意元组$(i,j)$中的相对大小关系不变，所以普通的一致性指数和时间依赖的一致性指数是等价的。
+
+\begin{table}[h]
+\caption{HitBoost模型性能对比。星号“*”表示我们提出的方法。}
+\begin{tabular}{ccccc}
+\toprule
+方法 & WHAS & SUPPORT & METABRIC & ROTT2 \\ 
+\midrule
+CoxPH & 0.740648 & 0.593005 & 0.633109 & 0.698081 \\
+CoxBoost & 0.740682 & 0.590609 & 0.624546 & 0.698542 \\
+ThresReg & 0.732674 & 0.591483 & 0.621219 & 0.658560 \\
+RSF & 0.913789 & 0.614945 & 0.650566 & 0.675589 \\
+\textbf{HitBoost*} & \textbf{0.929190} & \textbf{0.631281} & \textbf{0.668679} & \textbf{0.705427} \\
+\bottomrule
+\end{tabular}
+\label{table04}
+\end{table}
+
+HitBoost方法以及用于对比的常用的生存分析方法在各个数据集上的评估结果如表\ref{table04}所示。从表\ref{table04}我们可以看出，HitBoost方法在四个公开数据集上的预测性能都超过了其他的四种方法。在WHAS数据集中，HitBoost模型相比随机生存森林RSF模型在一致性指数上提升了大约1.7\%，并且RSF模型是四种常用的生存分析模型中性能最好的。类似地，在SUPPORT和METABRIC数据集上，HitBoost方法将一致性指数分别提升了大约2.7\%和2.8\%。只有在ROTT2数据集上，HitBoost方法的性能提升并不明显，只有大概1\%。从实验结果可以看出，HitBoost相比常用的生存分析方法有着更好的预测性能和风险区分度。它不再遵循任何关于个体风险比例的假设，而是使用多输出的梯度提升树（构建在XGBoost之上）来直接学习协变量和风险函数之间的潜在关系。一方面，它抛弃了先验假设，有着更加广泛的适用场景；另外一方面，它可以使用梯度提升树生成过程中的统计量有效评估特征重要性，保证了模型的解释性。关于HitBoost模型解释性的介绍将在第五章给出。
+
+为了观察HitBoost模型的拟合情况及稳定性，我们展示了它在各个数据集上的学习曲线，结果如图\ref{pic08}所示。图中曲线每个点的横坐标表示当前模型迭代次数，纵坐标表示当前拟合模型在测试集上的预测性能。曲线上的空心点表示了HitBoost模型最终在各个数据集上的实际停止迭代点，它是由贝叶斯超参数搜索得到的。从图\ref{pic08}可以看出，HitBoost模型在四个数据集上最终都趋于稳定，并未出现过拟合的现象。拟合各个数据集用到的模型超参数均来自于贝叶斯超参数优化。为了充分地观察模型在每一步迭代时的拟合情况，只有迭代次数nrounds被统一设置为了160。
+
+\begin{figure}[H]
+\includegraphics[width=0.9\textwidth]{pic08.png}
+\caption{HitBoost模型的学习曲线}
+\label{pic08}
+\end{figure}
+
 \subsection{样例分析}
+
+本节，为了查看HitBoost生存分析方法对生存函数的估计情况，我们进行样例分析实验。正如本章前文所介绍的，HitBoost生存分析方法的预测目标是首次发生事件时间的概率分布，HitBoost模型的直接输出也是首次发生事件时间的概率分布。而基于风险比例假设的模型的输出为风险比例，需要通过计算转化得到风险函数。本节的样例分析实验中，我们从四个数据集的测试集中随机选择了一个样本，然后使用经过拟合的HitBoost模型预测各个样本的首次发生事件时间的概率分布，最后转换得到它们的估计生存函数。
+\begin{figure}[h]
+\centering 
+\subfigure[WHAS]{\label{pic09:a}
+\includegraphics[width=0.45\textwidth]{pic09a.png}
+}
+\hspace{0.01\linewidth}
+\subfigure[SUPPORT]{\label{pic09:b}
+\includegraphics[width=0.45\textwidth]{pic09b.png}
+}
+\vfill
+\subfigure[METABRIC]{\label{pic09:c}
+\includegraphics[width=0.45\textwidth]{pic09c.png}
+}
+\hspace{0.01\linewidth}
+\subfigure[ROTT2]{\label{pic09:d}
+\includegraphics[width=0.45\textwidth]{pic09d.png}
+}
+\caption{样例分析：来自不同数据集的个体生存函数估计，由不同预测模型给出。}
+\label{pic09}
+\end{figure}
+
+各个样本的估计生存函数及其他对比方法给出的估计生存函数值的可视化结果如图\ref{pic09}所示。由CoxPH，CoxBoost和ThresReg模型估计的生存函数曲线都是相对平滑的，因为它们都对个体风险函数做出了假设，服从某个固定的数学表达形式。对数据集WHAS，SUPPORT和ROTT2中的样本（分别如图\ref{pic09:a}，\ref{pic09:b}和\ref{pic09:d}），它们都在对应的观测时间点发生了事件，即$E=1$。由HitBoost模型估计的生存曲线在垂直虚线标记处所对应的实际发生事件时间点出现了急剧的下降，这正好说明HitBoost模型预测在该观测时间点有着更高的发生事件风险。而CoxPH，CoxBoost和ThresReg模型估计的个体生存曲线在各个时间点都较为平缓，RSF模型估计的个体生存曲线虽然与HitBoost模型趋势大致相同，但是其下降幅度不如HitBoost模型。而且，HitBoost模型在该观测时间点估计的生存率比其他四个模型都要低，这与三个样本的实际事件观测情况更加相符。对METABRIC数据集中的样本（如图\ref{pic09:c}），它在整个观测期中没有发生事件，而是出现了失访，即$E=0$。不同于其他四个模型对个体生存率的过低估计，HitBoost模型预测的个体生存函数在整个观测期都保持较高生存率的水平，这更加符合实际的事件观测情况，即失访个体应该有更高的概率活过实际的失访时间。 
+
+本节的样例分析实验结果更加直观地给出了各个模型对个体生存函数的预测情况。从实验结果可以看出，我们提出的基于梯度提升树的生存分析优化方法HitBoost充分发挥了它不再遵循任何先验假设的优势，从而导致它在个体首次发生事件时间概率分布的预测上更加准确，所以HitBoost方法相对一类遵循先验假设的方法，还有随机生存森林，有着更好的风险区分度与预测性能。
 
 \section{本章小结}
 
