@@ -4,7 +4,88 @@
 \chapter{梯度计算相关定理的证明}
 
 \section{HitBoost梯度计算}
-...
+
+\subsection{目标函数$L_1$}
+
+下面给出对定理\ref{thm:1.1}和\ref{thm:1.2}的证明：
+\begin{proof}
+已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]$$ 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，如果$\delta_k = 1$，那么$L_1$中和个体$k$有关的部分为$ln(\hat{y}_{T_k}^k)$，所以$L_1$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 1} = I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，那么$L_1$中和个体$k$有关的部分为$ln(1-\sum_{t\le T_k}\hat{y}_t^k)$，对其求导数，我们可以得到相应的梯度表达式：$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 0} = I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)}$$ 其中累积风险函数$\hat{F}$用来简化表达式。综上所证，如定理\ref{thm:1.1}所示，我们有如下$L_1$关于$\hat{y}_t^k$的\textbf{一阶梯度}$$
+\frac{\partial L_1}{\partial \hat{y}_t^k}=
+\begin{cases}
+  I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k} & \text{if } \delta_k = 1,\\
+  I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)} & \text{if } \delta_k = 0.
+\end{cases}
+$$ 不需要太多的推导，我们可以直接在定理\ref{thm:1.1}的基础上，直接对上面的表达式求导得到$L_1$的\textbf{二阶梯度}，即定理\ref{thm:1.2}如下：$$
+\frac{\partial^2 L_1}{\partial \hat{y}_t^k}=
+\begin{cases}
+  I(t=T_k)\cdot \frac{-1}{{(\hat{y}_t^k)}^2} & \text{if } \delta_k = 1,\\
+  I(t\le T_k)\cdot \frac{1}{{[1-\hat{F}(k, T_k)]}^2} & \text{if } \delta_k = 0.
+\end{cases}
+$$
+\end{proof}
+
+\subsection{目标函数$L_2$}
+
+为了方便推导$L_2$的梯度，我们分别考虑其分子$\beta$和分母$\alpha$。下面给出对定理\ref{thm:1.3}和\ref{thm:1.4}的证明：
+\begin{proof}
+已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right]$$ 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的梯度。
+
+首先，我们考虑集合$\Omega$，从中找到和个体$k$有关的元素。遍历集合$\Omega$的所有元素，和个体$k$相关的元素可以被归纳到两个不相交的子集中：$$\Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}$$ 和 $$\Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}$$ 从集合意义上来说，$\Omega_1$表示实际风险小于$k$的个体和$k$组成的元组的集合，$\Omega_2$表示实际风险大于$k$的个体和$k$组成的元组的集合。
+
+如果$\delta_k = 1$，那么$\alpha$中和个体$k$有关的部分可以展开为$$\alpha \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} -\left[ \hat{F}(k, T_k) - \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} -\left[ \hat{F}(i, T_i) - \hat{F}(k, T_i) \right] $$ 我们首先考虑集合$\Omega_1$，定义$\alpha_1$为：\[
+\begin{split}
+\alpha_1 &= \sum_{(k,i)\in \Omega_1} -\left[ \hat{F}(k, T_k) - \hat{F}(i, T_k) \right] \\
+         &= \sum_{(k,i)\in \Omega_1} - ( \sum_{\tau \le T_k} \hat{y}_{\tau}^i - \sum_{\tau \le T_k} \hat{y}_{\tau}^k )
+\end{split}
+\] 所以，$\alpha_1$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_1}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}$$ 同理，考虑集合$\Omega_2$，定义$\alpha_2$为：\[
+\begin{split}
+\alpha_2 &= \sum_{(i,k)\in \Omega_2} -\left[ \hat{F}(i, T_i) - \hat{F}(k, T_i) \right] \\
+         &= \sum_{(i,k)\in \Omega_2} - ( \sum_{\tau \le T_i} \hat{y}_{\tau}^k - \sum_{\tau \le T_i} \hat{y}_{\tau}^i )
+\end{split}
+\] 所以，$\alpha_2$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_2}{\partial \hat{y}_t^k} = \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i)$$ 故我们可以总结$\alpha$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial \alpha}{\partial \hat{y}_t^k} = \frac{\partial \alpha_1}{\partial \hat{y}_t^k} + \frac{\partial \alpha_2}{\partial \hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，则和个体$k$有关的子集只剩$\Omega_2$。所以，我们可以证明得到定理\ref{thm:1.3}给出的\textbf{一阶梯度}表达式：$$
+\frac{\partial \alpha}{\partial \hat{y}_t^k}=\alpha^{'}=
+\begin{cases}
+I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)} + \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 1,\\
+\sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 0.
+\end{cases}
+$$ 由于上述的一阶梯度表达式中没有出现$\hat{y}_t^k$，所以$\alpha$关于$\hat{y}_t^k$的\textbf{二阶梯度}为：$$
+\frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0
+$$
+
+对于$L_2$项的分子$\beta$，已知$$\beta = \sum_{(i,j)\in \Omega} -\left[\hat{F}(i, T_i) - \hat{F}(j, T_i)\right] \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right]$$ 对于个体$k$，现在我们需要推导$\beta$关于$\hat{y}_t^k$的梯度。和分母$\alpha$的表达式不同，分子$\beta$中含有函数$\phi(\cdot)$。同样地，我们需要考虑集合$\Omega$中和个体$k$相关的元素，将其分为两个不相交的子集$\Omega_1$和$\Omega_2$。
+
+如果$\delta_k = 1$，那么$\beta$中和个体$k$有关的部分可以展开为$$\beta \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} W_{i,k}\cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(k, T_i) \right] $$ 首先考虑上式加号左边的部分，定义$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right]$$ 由于当$\hat{F}(k, T_k) - \hat{F}(i, T_k) \ge \gamma$时，函数$\phi(\cdot)=0$，所以我们可以简化$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} I(-W_{k,i} < \gamma) \cdot W_{k,i}\cdot [W_{k,i} + \gamma]^n $$ 从上面的对$\alpha$梯度的推导我们已经得到$W_{k,i}$关于$\hat{y}_t^k$的梯度为$$\frac{\partial W_{k,i}}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}$$ 所以我们借助链式法则，可以推导得到$\beta_1$关于$\hat{y}_t^k$的一阶梯度如下$$
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} = I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} {I(-W_{k,i}<\gamma)\cdot (W_{k,i}+\gamma)^{n-1}\cdot [-(n+1)\cdot W_{k,i}-\gamma]}
+$$ 同理，对于$\beta$展开式的右边部分$\beta_2=\sum_{(i,k)\in \Omega_2} W_{i,k}\cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(k, T_i) \right]$，我们可以得到其一阶梯度如下$$
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} = \sum\limits_{(i,k)\in \Omega_2} {I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot (W_{i,k}+\gamma)^{n-1}\cdot [(n+1)\cdot W_{i,k}+\gamma]}
+$$ 否则，如果$\delta_k = 0$，则$\beta$的表达式中和个体$k$有关的子集只剩$\Omega_2$，所以此时$\beta$关于$\hat{y}_t^k$的一阶梯度和$\beta_2$一样。最终，我们可以得到定理\ref{thm:1.3}给出的\textbf{一阶梯度}表达式：$$
+\frac{\partial \beta}{\partial \hat{y}_t^k}=\beta^{'}=
+\begin{cases}
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} + \frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 1,\\
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 0.
+\end{cases}
+$$
+
+有了一阶梯度$\beta^{'}$的表达式，我们可以通过对$\beta^{'}$求导来推导$\beta$的二阶梯度。在推导二阶梯度的过程中，由于仅涉及梯度求解的链式法则，所以我们直接给出对$\beta^{'}$求导的结果，即定理\ref{thm:1.4}：\[
+\begin{split}
+\frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} =& I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} I(-W_{k,i}<\gamma)\cdot \\
+  & \left\{(n+1)\cdot (W_{k,i}+\gamma)^{n-1} + (n-1)\cdot (W_{k,i}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{k,i}+\gamma]\right\} \\
+\frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} =& \sum\limits_{(i,k)\in \Omega_2} I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot \\
+  & \left\{(n+1)\cdot (W_{i,k}+\gamma)^{n-1} + (n-1)\cdot (W_{i,k}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{i,k}+\gamma]\right\}
+\end{split}
+\] 且有$$
+\frac{\partial^2 \beta}{\partial \hat{y}_t^k}=\beta^{''}=
+\begin{cases}
+\frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} + \frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 1,\\
+\frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} & \text{if } \delta_k = 0.
+\end{cases}
+$$
+\end{proof}
 
 \section{BecCox梯度计算}
+
+\subsection{目标函数$L_1$}
+...
+
+\subsection{目标函数$L_2$}
 ...
