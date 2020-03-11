@@ -69,7 +69,7 @@ $$
 在易拓展，灵活的梯度提升树框架XGBoost的帮助下，我们实现了提出的HitBoost生存分析方法。不同于一般的梯度提升树模型，XGBoost需要推导目标函数关于模型预测值的一阶梯度和二阶梯度，而一般的梯度提升树模型不需要二阶梯度信息。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录中给出。
 
 \begin{theorem}\label{thm:1.1}
-对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
+对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
 \frac{\partial L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
 I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k} & \text{if } \delta_k = 1,\\
@@ -79,7 +79,7 @@ $$
 \end{theorem}
 
 \begin{theorem}\label{thm:1.2}
-对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
+对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
 \frac{\partial^2 L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
 I(t=T_k)\cdot \frac{1}{{(\hat{y}_t^k)}^2} & \text{if } \delta_k = 1,\\
@@ -103,7 +103,7 @@ $$
 我们有如下定理。
 
 \begin{theorem}\label{thm:1.3}
-对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
+对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
 \frac{\partial \alpha}{\partial \hat{y}_t^k}=\alpha^{'}=
 \begin{cases}
 I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)} + \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 1,\\
@@ -124,7 +124,7 @@ $$ 其中\[
 \end{theorem}
 
 \begin{theorem}\label{thm:1.4}
-对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
+对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
 \frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0
 $$ 且$L_2$项分子$\beta$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k}=\beta^{''}=

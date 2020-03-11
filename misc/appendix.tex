@@ -9,7 +9,7 @@
 
 下面给出对定理\ref{thm:1.1}和\ref{thm:1.2}的证明：
 \begin{proof}
-已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]$$ 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，如果$\delta_k = 1$，那么$L_1$中和个体$k$有关的部分为$ln(\hat{y}_{T_k}^k)$，所以$L_1$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 1} = I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，那么$L_1$中和个体$k$有关的部分为$ln(1-\sum_{t\le T_k}\hat{y}_t^k)$，对其求导数，我们可以得到相应的梯度表达式：$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 0} = I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)}$$ 其中累积风险函数$\hat{F}$用来简化表达式。综上所证，如定理\ref{thm:1.1}所示，我们有如下$L_1$关于$\hat{y}_t^k$的\textbf{一阶梯度}$$
+已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，如果$\delta_k = 1$，那么$L_1$中和个体$k$有关的部分为$ln(\hat{y}_{T_k}^k)$，所以$L_1$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 1} = I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，那么$L_1$中和个体$k$有关的部分为$ln(1-\sum_{t\le T_k}\hat{y}_t^k)$，对其求导数，我们可以得到相应的梯度表达式：$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 0} = I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)}$$ 其中累积风险函数$\hat{F}$用来简化表达式。综上所证，如定理\ref{thm:1.1}所示，我们有如下$L_1$关于$\hat{y}_t^k$的\textbf{一阶梯度}$$
 \frac{\partial L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
   I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k} & \text{if } \delta_k = 1,\\
@@ -28,7 +28,7 @@ $$
 
 为了方便推导$L_2$的梯度，我们分别考虑其分子$\beta$和分母$\alpha$。下面给出对定理\ref{thm:1.3}和\ref{thm:1.4}的证明：
 \begin{proof}
-已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right]$$ 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的梯度。
+已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的梯度。
 
 首先，我们考虑集合$\Omega$，从中找到和个体$k$有关的元素。遍历集合$\Omega$的所有元素，和个体$k$相关的元素可以被归纳到两个不相交的子集中：$$\Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}$$ 和 $$\Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}$$ 从集合意义上来说，$\Omega_1$表示实际风险小于$k$的个体和$k$组成的元组的集合，$\Omega_2$表示实际风险大于$k$的个体和$k$组成的元组的集合。
 
@@ -88,7 +88,7 @@ $$
 
 BecCox目标函数$L_1$项为Efron偏似然估计函数的负对数。下面，我们推导$L_1$项的梯度，给出对定理\ref{thm:2.1}和\ref{thm:2.2}的证明。证明中相关符号的定义，请参考4.1节。
 \begin{proof}
-已知$$L_1 = \sum_{t\in D} \left\{ \sum_{j\in q(t)} [ln(SR(t)-w_j\cdot SD(t))-\hat{y}_j] \right\}$$ 对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，我们需要推导$L_1$关于$\hat{y}_k$ 的梯度。
+已知$$L_1 = \sum_{t\in D} \left\{ \sum_{j\in q(t)} [ln(SR(t)-w_j\cdot SD(t))-\hat{y}_j] \right\}$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$L_1$关于$\hat{y}_k$ 的梯度。
 
 我们考虑$\hat{y}_k$在上述表达式中可能出现的情况。一方面，当个体$k$在某个时间点$t\in D$处于风险期时，即$T_k\ge t$，$\hat{y}_k$会出现在所有的$SR(t)$中，所以我们在推导关于个体$k$的梯度时，仅需要考虑$L_1$中$t \le T_k$的部分；另一方面，如果个体$k$满足$T_k=t$和$\delta_k=1$，那么$\hat{y}_k$还会出现在$SD(t)$中。所以，我们重点讨论以下两种情况。
 
@@ -127,7 +127,7 @@ $$
 参考定义\ref{def:2}，如定理\ref{thm:2.2}所示，我们将$L_1$关于$\hat{y}_k$的\textbf{二阶梯度}总结如下：$$
 \frac{\partial^2 L_1}{\partial \hat{y}_k} = h_k = 
 \begin{cases}
-g_k - (e^{\hat{y}_k})^2 \left\{ \left[\sum_{t\le T_k} \nu(t)\right] - \xi(T_k) \right\} + 1 & \text{if } \delta_k = 1,\\
+g_k - (e^{\hat{y}_k})^2 \left\{ \left[\sum_{t\le T_k} \nu(t)\right] - \pi(T_k) \right\} + 1 & \text{if } \delta_k = 1,\\
 g_k - (e^{\hat{y}_k})^2 \sum_{t\le T_k} \nu(t) & \text{if } \delta_k = 0.
 \end{cases}
 $$
@@ -137,7 +137,7 @@ $$
 
 BecCox目标函数$L_2$项与HitBoost目标函数$L_2$项一样，都是使用相同凸函数近似的一致性指数。但由于BecCox预测输出为实数类型，不再是向量类型，所以它的目标函数$L_2$项的推导有细微的差别。为了方便推导$L_2$的梯度，我们分别考虑其分子$\beta$和分母$\alpha$。下面给出对定理\ref{thm:2.3}和\ref{thm:2.4}的证明：
 \begin{proof}
-已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j}=-(\hat{y}_i-\hat{y}_j)$$对观测时间和观测事件状态分别为$\delta_k$和$T_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_k$ 的梯度。
+已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j}=-(\hat{y}_i-\hat{y}_j)$$对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_k$ 的梯度。
 
 首先，我们考虑集合$\Omega$，从中找到和个体$k$有关的元素。遍历集合$\Omega$的所有元素，和个体$k$相关的元素可以被归纳到两个不相交的子集中：$$\Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}$$ 和 $$\Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}$$ 从集合意义上来说，$\Omega_1$表示实际风险小于$k$的个体和$k$组成的元组的集合，$\Omega_2$表示实际风险大于$k$的个体和$k$组成的元组的集合。
 
