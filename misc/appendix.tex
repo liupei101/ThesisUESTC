@@ -18,7 +18,7 @@
 $$ 不需要太多的推导，我们可以直接在定理\ref{thm:1.1}的基础上，直接对上面的表达式求导得到$L_1$的\textbf{二阶梯度}，即定理\ref{thm:1.2}如下：$$
 \frac{\partial^2 L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
-  I(t=T_k)\cdot \frac{-1}{{(\hat{y}_t^k)}^2} & \text{if } \delta_k = 1,\\
+  I(t=T_k)\cdot \frac{1}{{(\hat{y}_t^k)}^2} & \text{if } \delta_k = 1,\\
   I(t\le T_k)\cdot \frac{1}{{[1-\hat{F}(k, T_k)]}^2} & \text{if } \delta_k = 0.
 \end{cases}
 $$
