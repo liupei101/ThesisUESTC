@@ -1,13 +1,11 @@
 
 \chapter{HitBoost生存分析方法}
 
-针对现有生存分析方法依赖先验假设或解释性不足的问题，我们在传统的FHT首次命中时间模型的基础上研究了基于梯度提升树的优化方法，提出一种新的生存分析方法：HitBoost。该方法不再依赖任何先验假设，使用多输出的梯度提升树直接预测首次命中时间的概率分布，同时保证了一定的模型解释性。考虑到XGBoost梯度提升树算法在模型表征能力以及避免过拟合等方面的优势，我们在该框架的基础上研究并实现了HitBoost生存分析方法。下面将首先从模型原理，目标函数及梯度计算三个方面介绍提出的HitBoost生存分析方法，然后介绍四个公开的生存数据集的基本情况，最后给出HitBoost方法在公开数据集上的实验结果。
+针对现有生存分析方法依赖先验假设或解释性不足的问题，我们在传统的FHT首次命中时间模型的基础上研究了基于梯度提升树的优化方法，提出一种新的生存分析方法：HitBoost。该方法不再依赖任何先验假设，使用多输出的梯度提升树直接预测首次命中时间的概率分布，同时保证了一定的模型解释性。考虑到XGBoost梯度提升树算法在模型表征能力以及避免过拟合等方面的优势，我们在该框架的基础上研究并实现了HitBoost生存分析方法。下面将首先从模型框架和优化方法两个方面介绍提出的HitBoost生存分析方法，然后介绍四个公开的生存数据集的基本情况，最后给出HitBoost方法在公开数据集上的实验结果。
 
-本章内容参见文献：Pei Liu, Bo Fu, Simon X. Yang. Hitboost: Survival analysis via a multi­ output gradient boosting decision tree method[J]. IEEE Access, 2019, 7: 56785-­56795.
+本章内容参见文献：Hitboost: Survival analysis via a multi­ output gradient boosting decision tree method[J]. IEEE Access, 2019, 7: 56785-­56795.
 
-\section{HitBoost}
-
-\subsection{模型介绍}
+\section{模型框架}
 
 为了不再依赖个体风险函数的任何假设，直接学习协变量与首次发生事件时间概率分布之间潜在的关系，同时保证模型的特征解释性，我们提出了一种基于多输出的梯度提升树的生存分析方法——HitBoost。如图\ref{pic01}所示，HitBoost模型是一个多输出的梯度提升树模型，它学习并且直接估计在给定协变量$x^*$的条件下，在$t^*$时刻首次发生事件的概率$P(t = t^*,\delta = 1\mid x = x^* )$。HitBoost模型的输入为协变量（或生存数据），每一个输出由一个单独的梯度提升树模型给出。作为一个前向加法模型，每个单独的梯度提升树模型由多棵决策树组成。多个独立的梯度提升树模型经过一个softmax层转化为最终的输出预测值。模型预测值$\hat{y}$是一个向量，写作：
 \begin{equation}
@@ -20,11 +18,13 @@
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{pic01.png}
-\caption{HitBoost模型}
+\caption{HitBoost模型框架}
 \label{pic01}
 \end{figure}
 
 当给定生存数据和特定的目标函数（见下节）后，多颗梯度提升树模型在每一轮迭代的过程中，通过梯度提升算法并行地学习协变量和风险函数之间的潜在关系。最后，经过拟合的HitBoost生存分析模型可以准确地预测首次发生事件时间的概率密度函数，或者经过转换得到风险函数和生存函数的估计值。从HitBoost模型的结构可以看出，它可以学习复杂的风险函数表达式，而不仅限于比例风险函数形式或某个固定形式的随机过程。而且，由于该方法基于多输出的梯度提升树，所以它可以充分利用相关的统计量，如节点分裂过程中用于寻找最佳分裂特征的高阶梯度值，去探索和感兴趣事件相关的重要特征，这也是HitBoost方法的优点之一。
+
+\section{优化算法}
 
 \subsection{目标函数}
 
@@ -39,25 +39,25 @@ L=\theta \cdot L_1 + (1-\theta) \cdot L_2 \label{F33}
 \end{equation}
 其中$\theta \in \mathbb{R}$且满足 $0 \le \theta \le 1$，是模型需要调整的超参数之一。
  
-参考表达式\eqref{F8}可知，需要极小化的HitBoost目标函数$L_1$项如下：$$
-L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]
-$$ 
+参考表达式\eqref{F8}可知，需要极小化的HitBoost目标函数$L_1$项如下：
+\begin{equation}
+L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]
+\end{equation}
 对于个体$i$，$L_1$项保证了如果该个体在$T_i$时刻发生事件，则最大化其在$T_i$时刻首次发生事件的概率；否则，如果该个体在$T_i$时刻出现失访（未观测到时间发生），则最小化其在$T_i$时刻或$T_i$时刻之前首次发生事件的概率。
 
-在HitBoost目标函数$L_2$项中，一致性指数被当作了优化项。一般来说，一致性指数作为生存预测模型的评估指标，常常出现在模型性能评估中。它认为发生事件时间更早的个体所对应的模型风险估计值也应该更高。所以，我们在HitBoost目标函数中也应用了一致性指数中风险排序的思想。但是由于一致性指数不是一个凸函数，所以它无法被直接引入作为梯度提升树的优化目标。从文献\cite{Yan2004pre}得到启发，我们使用了凸函数$$
+在HitBoost目标函数$L_2$项中，一致性指数被当作了优化项。一般来说，一致性指数作为生存预测模型的评估指标，常常出现在模型性能评估中。它认为发生事件时间更早的个体所对应的模型风险估计值也应该更高。所以，我们在HitBoost目标函数中也应用了一致性指数中风险排序的思想。但是由于一致性指数不是一个凸函数，所以它无法被直接引入作为梯度提升树的优化目标。从文献\cite{Yan2004pre}得到启发，我们使用了凸函数
+\begin{equation}
 \phi(x,y)=
 \begin{cases}
 {[-(x-y-\gamma)]}^n & \text{if } x-y < \gamma,\\
 0 & \text{if } x-y \ge \gamma.
 \end{cases}
-$$
-去近似一致性指数中的指示函数，而不是熟悉的sigmoid函数。凸函数$\phi(\cdot)$中，模型超参数$\gamma$和$n$分别满足$0<\gamma \le 1$和$n>1$。对一致性指数进行调整，并且使用$\hat{F}(i, T_i)$代替个体$i$的预测风险后，可以得到$$
+\end{equation}
+去近似一致性指数中的指示函数，而不是熟悉的sigmoid函数。凸函数$\phi(\cdot)$中，模型超参数$\gamma$和$n$分别满足$0<\gamma \le 1$和$n>1$。对一致性指数进行调整，并且使用$\hat{F}(i, T_i)$代替个体$i$的预测风险后，可以得到
+\begin{equation}
 L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{F}(i, T_i), \hat{F}(j, T_i))}{\sum_{(i,j)\in \Omega} W_{i,j}}
-$$
-其中，分母$$
-W_{i,j}=-\left( \hat{F}(i, T_i) - \hat{F}(j, T_i) \right)
-$$
-为一个归一化系数。它是集合$\Omega$中每个元组$(i,j)$的权重系数，表示个体$i$和$j$之间的风险差值。使用凸函数$\phi(\cdot)$近似后的一致性指数$L_2$的作用主要表现在以下两个方面：
+\end{equation}
+其中，分母$W_{i,j}=-\left( \hat{F}(i, T_i) - \hat{F}(j, T_i) \right)$为一个归一化系数。它是集合$\Omega$中每个元组$(i,j)$的权重系数，表示个体$i$和$j$之间的风险差值。使用凸函数$\phi(\cdot)$近似后的一致性指数$L_2$的作用主要表现在以下两个方面：
 \begin{enumerate}
     \item 如果个体$i$比个体$j$更早发生事件，也就是说个体$i$有更高的事件发生风险，最小化$L_2$等于加大个体$i$和$j$之间的风险差值，直到这个差值大于或等于$\gamma$；
     \item 如果集合$\Omega$中某个元组$(i,j)$的风险差异大于或等于$\gamma$，那么这个元组将不会对目标函数$L_2$的大小产生任何影响。
@@ -66,7 +66,7 @@ $$
 
 \subsection{梯度计算}
 
-在易拓展，灵活的梯度提升树框架XGBoost的帮助下，我们实现了提出的HitBoost生存分析方法。不同于一般的梯度提升树模型，XGBoost需要推导目标函数关于模型预测值的一阶梯度和二阶梯度，而一般的梯度提升树模型不需要二阶梯度信息。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录中给出。
+在易拓展，灵活的梯度提升树框架XGBoost的帮助下，我们实现了提出的HitBoost生存分析方法。不同于一般的梯度提升树模型，XGBoost需要推导目标函数关于模型预测值的一阶梯度和二阶梯度，而一般的梯度提升树模型不需要二阶梯度信息。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录A中给出。
 
 \begin{theorem}\label{thm:1.1}
 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
@@ -88,18 +88,20 @@ I(t\le T_k)\cdot \frac{1}{{[1-\hat{F}(k, T_k)]}^2} & \text{if } \delta_k = 0.
 $$
 \end{theorem}
 
-在给出关于目标函数$L_2$的梯度的定理前，我们首先介绍一些符号约定。我们定义和个体$k$有关的两个互不相交子集$$
+在给出关于目标函数$L_2$的梯度的定理前，我们首先介绍一些符号约定。我们定义和个体$k$有关的两个互不相交子集\begin{equation}
 \Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}
-$$
-和$$
+\end{equation}
+和
+\begin{equation}
 \Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}
-$$
-分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设$L_2$的分母和分子分别为$\alpha$和$\beta$，即\[
+\end{equation}
+分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设$L_2$的分母和分子分别为$\alpha$和$\beta$，即：
+\begin{equation}
 \begin{split}
 \alpha &= \sum_{(i,j)\in \Omega} W_{i,j}\\
 \beta &= \sum_{(i,j)\in \Omega} W_{i,j} \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right]
 \end{split}
-\]
+\end{equation}
 我们有如下定理。
 
 \begin{theorem}\label{thm:1.3}
@@ -142,21 +144,27 @@ $$ 其中\[
 \]
 \end{theorem}
 
-由定理\ref{thm:1.1}，\ref{thm:1.2}，\ref{thm:1.3}和\ref{thm:1.4}，以及$$
+由定理\ref{thm:1.1}，\ref{thm:1.2}，\ref{thm:1.3}和\ref{thm:1.4}，以及
+\begin{equation}
 L=\theta\cdot L_1 + (1-\theta)\cdot L_2= \theta\cdot L_1 + (1-\theta)\cdot \frac{\beta}{\alpha}
-$$ 我们可以使用链式法则轻松推导出HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}$$
+\end{equation} 
+我们可以使用链式法则轻松推导出HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的一阶梯度
+\begin{equation}
 \frac{\partial L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \omega(\alpha, \beta)
-$$ 其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'}}{\alpha^2}$。HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}$$
+\end{equation}
+其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'}}{\alpha^2}$。HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的二阶梯度
+\begin{equation}
 \frac{\partial^2 L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial^2 L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \tau(\alpha, \beta)
-$$ 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
+\end{equation} 
+其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
 
-在实现HitBoost生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率且缩短了模型拟合时间。具体实现可以参考源代码\emph{https://github.com/liupei101/libsurv}。
+在实现HitBoost生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率且缩短了模型拟合时间。具体实现可参考后文附录B。
 
-\section{实验生存数据集}
+\section{实验数据集}
 
-在实验评估提出的生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在对收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件，样本量，数据特征数目，事件占比，观测时间最小值，观测时间中位数和观测时间最大值几个方面观察了数据，统计结果如表\ref{table01}所示。使用Kaplan-Meier方法估计各个数据集人群的生存曲线，结果如图\ref{pic02}所示。从图中我们可以直观地看出，SUPPORT数据集人群总体的生存状况相对而言是最差的，同时死亡风险非常高，且观测时间最短，而METABRIC数据集人群总体的生存状态最好，同时观测时间最长；ROTT2数据集人群生存状况稍差于METABRIC数据集，但又明显好于WHAS数据集。
+在实验评估提出的生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在对收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件，样本量，数据特征数目，事件占比，观测时间最小值，观测时间中位数和观测时间最大值几个方面观察了数据，统计结果如表\ref{table01}所示。
 
-\begin{table}[h]
+\begin{table}[H]
 \caption{生存数据集的基本情况统计}
 \begin{tabular}{cccccccc}
 \toprule
@@ -172,7 +180,9 @@ ROTT2 & 乳腺癌患者生存 & 2982 & 9 & 42.66\% & 2 & 87 & 232 \\
 \label{table01}
 \end{table}
 
-\begin{figure}[h]
+使用Kaplan-Meier方法估计各个数据集人群的生存曲线，结果如图\ref{pic02}所示。从图中我们可以直观地看出，SUPPORT数据集人群总体的生存状况相对而言是最差的，同时死亡风险非常高，且观测时间最短，而METABRIC数据集人群总体的生存状态最好，同时观测时间最长；ROTT2数据集人群生存状况稍差于METABRIC数据集，但又明显好于WHAS数据集。
+
+\begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic02.png}
 \caption{各个数据集人群的生存曲线}
 \label{pic02}
@@ -182,19 +192,17 @@ ROTT2 & 乳腺癌患者生存 & 2982 & 9 & 42.66\% & 2 & 87 & 232 \\
 
 WHAS \citing{Hosmer2000Applied}（Worcester Heart Attack Study）数据集收集了1638名心脏病患者，主要研究是否发生急性心肌梗塞（AMI），及疾病相关的影响因素。数据集中主要包含5个患者信息：年龄，性别，BMI，是否有左心衰竭并发症，心肌梗塞等级。在长达67个月的随访中，有42.12\%的患者发生了急性心肌梗塞导致的死亡。全部的观测个体中，观测时间最大的是67个月，观测时间最小的是1个月，观测时间中位数是40个月。
 
+使用Kaplan-Meier方法估计WHAS数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic03}所示。从图中可以看出，随着观测时间的增长，WHAS数据集中急性心肌梗塞的存活率呈线性下降的趋势。
+
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic03.png}
 \caption{WHAS数据集人群生存曲线}
 \label{pic03}
 \end{figure}
 
-使用Kaplan-Meier方法估计WHAS数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic03}所示。从图中可以看出，随着观测时间的增长，WHAS数据集中急性心肌梗塞的存活率呈线性下降的趋势。
-
 \subsection{SUPPORT}
 
-SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcomes and Risks of Treatment）数据集大规模地收集了重病住院的成年人的临床数据，主要研究该类型患者的生存状态及影响因素。该数据集共有9015名患者，对应信息有14个：年龄，性别，种族，并发症数量，是否糖尿病，是否痴呆症，是否癌症，平均动脉血压，心率，呼吸频率，体温，白细胞数量，血清钠含量和血清肌酐含量。
-
-在排除了存在未知信息的个体后，我们总共收集了符合规范的8873名患者数据，其中68.03\%的患者在观测期间出现了死亡。这些患者的观测时间的最小值，中位数，和最大值分别是1个月，8个月和68个月。使用Kaplan-Meier方法估计SUPPORT数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic04}所示。从图中可以看出，SUPPORT数据集中的重病住院患者的生存率在前5个月出现急剧下降，而后下降趋势较为平稳，形状类似于与x轴对称的log曲线。
+SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcomes and Risks of Treatment）数据集大规模地收集了重病住院的成年人的临床数据，主要研究该类型患者的生存状态及影响因素。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic04.png}
@@ -202,17 +210,19 @@ SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcom
 \label{pic04}
 \end{figure}
 
+该数据集共有9015名患者，对应信息有14个：年龄，性别，种族，并发症数量，是否糖尿病，是否痴呆症，是否癌症，平均动脉血压，心率，呼吸频率，体温，白细胞数量，血清钠含量和血清肌酐含量。在排除了存在未知信息的个体后，我们总共收集了符合规范的8873名患者数据，其中68.03\%的患者在观测期间出现了死亡。这些患者的观测时间的最小值，中位数，和最大值分别是1个月，8个月和68个月。使用Kaplan-Meier方法估计SUPPORT数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic04}所示。从图中可以看出，SUPPORT数据集中的重病住院患者的生存率在前5个月出现急剧下降，而后下降趋势较为平稳，形状类似于与x轴对称的log曲线。
+
 \subsection{METABRIC}
 
 METABRIC \citing{Curtis2012The}（Molecular Taxonomy of Breast Cancer International Consortium）数据主要研究基因和蛋白质的表达信息对乳腺癌患者生存的影响，从而辅助医生制定更好的治疗方案。在原始的包含1980名乳腺癌患者的数据集中去除存在不完整信息的个体后，我们最终收集了1903名乳腺癌患者的数据，死亡率为57.96\%。
-
-和\cite{Katzman2018DeepSurv}中的做法一样，我们也保留了原始数据中的9个特征：基因MKI67，EGFR，PGR，ERBB2，雌性激素受体状态，是否放疗，是否化疗，ER状态，诊断时年龄。数据集中1903名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是1个月，115个月和356个月。使用Kaplan-Meier方法估计METABRIC数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic05}所示。从图中可以看出，METABRIC数据集中乳腺癌患者的生存率的下降趋势和WHAS数据集类似，与观察时间呈线性关系。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic05.png}
 \caption{METABRIC数据集人群生存曲线}
 \label{pic05}
 \end{figure}
+
+和\cite{Katzman2018DeepSurv}中的做法一样，我们也保留了原始数据中的9个特征：基因MKI67，EGFR，PGR，ERBB2，雌性激素受体状态，是否放疗，是否化疗，ER状态，诊断时年龄。数据集中1903名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是1个月，115个月和356个月。使用Kaplan-Meier方法估计METABRIC数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic05}所示。从图中可以看出，METABRIC数据集中乳腺癌患者的生存率的下降趋势和WHAS数据集类似，与观察时间呈线性关系。
 
 \subsection{ROTT2}
 
@@ -226,9 +236,15 @@ ROTT2 \citing{Foekens2000The}（Rotterdam Tumor Bank）数据使用病人的病�
 
 数据中收集的临床信息有9个：年龄，绝经状态，肿瘤大小，肿瘤分级，阳性淋巴细胞个数，PR，ER，是否激素治疗，是否化疗。数据集中2982名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是2个月，87个月和232个月。使用Kaplan-Meier方法估计ROTT2数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic06}所示。从图中可以看出，ROTT2数据集中乳腺癌患者的生存率在前200个月都呈线性下降，观察期后部分基本维持平稳。
 
-\subsection{数据处理}
+\subsection{数据划分}
 
-在完成公开数据集的整体情况统计后，我们将数据集划分为训练集和独立测试集，分别用于后续的模型训练和模型性能评估。具体地，我们采用随机划分的方式将各个数据集按照8:2的比例划分为训练集和测试集，同时使用统计方法检验随机划分后数据的分布是否一致。连续变量使用KS检验，离散变量使用卡方检验，而生存状态的差异性检验采用log-rank检验 \citing{Kalbfleisch1986The}。log-rank检验的原假设是两个人群生存状态服从同一个分布。表\ref{table02}给出了各个数据集划分出的训练集和测试集的统计情况，表\ref{table02}中P值给出的是对一个数据集划分出的训练数据和测试数据实施log-rank检验的结果。从结果上可以看出，各个数据集的训练集和测试集在生存状态上无显著差异（P>0.05）。
+在完成公开数据集的整体情况统计后，我们将数据集划分为训练集和独立测试集，分别用于后续的模型训练和模型性能评估。数据划分的整体流程如图\ref{pic19}所示。具体地，我们采用随机划分的方式将各个数据集按照8:2的比例划分为训练集和测试集，同时使用统计方法检验随机划分后数据的分布是否一致。当某个差异显著性检验的P值大于0.05时，我们会设置一个新的随机数种子来重新进行数据划分，直到训练集和测试集中数据分布无显著差异。其中，在差异显著性检验阶段，连续变量使用KS检验，离散变量使用卡方检验，而生存状态的差异性检验采用logrank检验 \citing{Kalbfleisch1986The}。logrank检验的原假设是两个人群生存状态服从同一个分布。表\ref{table02}给出了各个数据集划分出的训练集和测试集的统计情况，表\ref{table02}中P值给出的是对一个数据集划分出的训练数据和测试数据实施logrank检验的结果。从结果上可以看出，各个数据集的训练集和测试集在生存状态上无显著差异（P>0.05）。
+
+\begin{figure}[H]
+\includegraphics[width=0.95\textwidth]{pic19.pdf}
+\caption{数据划分整体流程}
+\label{pic19}
+\end{figure}
 
 \begin{table}[h]
 \caption{训练集和测试集的基本情况}
@@ -257,8 +273,16 @@ ROTT2                & 2385      & 42.73\%     & 597       & 42.38\%     & 0.995
 \end{itemize}
 我们借助相关软件包实现了这些对比方法，其中CoxPH方法来自Python包lifelines \citing{lifelines}，CoxBoost方法来自R包mboost \citing{mboost}，ThresReg方法来自R包threg \citing{threg}，RSF方法来自R包randomForestSRC \citing{rfsrc}。
 
-\begin{table}[h]
-\caption{模型超参数搜索空间}
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{pic07.png}
+\caption{HitBoost模型贝叶斯超参数搜索过程}
+\label{pic07}
+\end{figure}
+
+模型训练所使用的超参数是通过贝叶斯超参数优化方法 \citing{Bergstra2013hpopt}得到的。我们在各个数据集的训练集上使用10折交叉验证来评估每一组搜索超参数的好坏，HitBoost模型在各个数据集上的贝叶斯超参数搜索过程如图\ref{pic07}所示。图中横坐标表示当前搜索次数，纵坐标表示当前搜索的超参数组合对应的模型性能，红色实心点表示最佳参数搜索点。HitBoost模型的超参数除了包括$\theta$，$\gamma$，$n$以外，还包括XGBoost框架原有的超参数集合。超参数$n$默认被设置为2，其余的超参数搜索空间设置如表\ref{table03}所示，其中超参数min\_child\_weight, reg\_lambda，reg\_gamma和$\gamma$在服从均匀分布的条件下进行随机搜索。各个数据集上超参数搜索得到的最佳超参数组合将被用于最终的模型训练。
+
+\begin{table}[H]
+\caption{模型超参数搜索空间设置}
 \begin{tabular}{ccccc}
 \toprule
 超参数 & 范围 & 步长 & 数目 & 含义 \\ 
@@ -278,20 +302,12 @@ $\theta$ & [0.5, 1.0] & 0.05 & 11 & $L_1$项系数 \\
 \label{table03}
 \end{table}
 
-\begin{figure}[H]
-\includegraphics[width=\textwidth]{pic07.png}
-\caption{HitBoost模型贝叶斯超参数搜索过程}
-\label{pic07}
-\end{figure}
-
-模型训练所使用的超参数是通过贝叶斯超参数优化方法 \citing{Bergstra2013hpopt}得到的。我们在各个数据集的训练集上使用10折交叉验证来评估每一组搜索超参数的好坏，HitBoost模型在各个数据集上的贝叶斯超参数搜索过程如图\ref{pic07}所示。图中横坐标表示当前搜索次数，纵坐标表示当前搜索的超参数组合对应的模型性能，红色实心点表示最佳参数搜索点。HitBoost模型的超参数除了包括$\theta$，$\gamma$，$n$以外，还包括XGBoost框架原有的超参数集合。超参数$n$默认被设置为2，其余的超参数搜索空间如表\ref{table03}所示，其中超参数min\_child\_weight, reg\_lambda，reg\_gamma和$\gamma$在服从均匀分布的条件下进行随机搜索。各个数据集上超参数搜索得到的最佳超参数组合将被用于最终的模型训练。
-
 \subsection{模型性能}
 
 在完成上述的贝叶斯超参数优化后，我们使用参数优化的结果在各个数据集的训练集上训练了HitBoost模型，然后使用一致性指数，在独立的测试集上评估了模型的预测性能。由于HitBoost模型的输出为首次发生事件时间的概率分布，所以我们需要使用时间依赖的一致性指数（如式\eqref{F14}所示）指标来评估该模型的性能。而对于一类预测风险比例的模型，由于风险函数$h(t)$转化为首次发生事件时间的累积分布函数$F(t)$后，对于任何个体$i$，式 \eqref{F13}中计算一致性指数的预测风险$\hat{R}_i$与式 \eqref{F14}中计算时间依赖一致性指数的预测风险$\sum_{t<T_i} \hat{y}_t^i$ 在任意元组$(i,j)$中的相对大小关系不变，所以普通的一致性指数和时间依赖的一致性指数是等价的。
 
 \begin{table}[h]
-\caption{HitBoost模型性能对比。星号“*”表示我们提出的方法。}
+\caption{HitBoost模型性能对比（星号“*”表示我们提出的方法）}
 \begin{tabular}{ccccc}
 \toprule
 方法 & WHAS & SUPPORT & METABRIC & ROTT2 \\ 
@@ -336,7 +352,7 @@ HitBoost方法以及用于对比的常用的生存分析方法，在各个数据
 \subfigure[ROTT2]{\label{pic09:d}
 \includegraphics[width=0.45\textwidth]{pic09d.png}
 }
-\caption{样例分析：来自不同数据集的个体生存函数估计，由不同预测模型给出。}
+\caption{样例分析：不同数据集的个体生存函数估计}
 \label{pic09}
 \end{figure}
 
@@ -346,6 +362,6 @@ HitBoost方法以及用于对比的常用的生存分析方法，在各个数据
 
 \section{本章小结}
 
-本章首先从原理，目标函数和实现三个方面介绍了提出的HitBoost生存分析方法。简单来说，该方法基于传统的FHT首次命中时间模型，使用梯度提升树实现。具体地，HitBoost方法使用多输出的梯度提升树直接预测感兴趣的事件发生随时间的概率分布，并且把生存分析相关的极大似然估计函数作为目标函数，同时还另外加入凸函数近似的一致性指数来调整风险排序。一方面它不再对个体风险函数的形式做出任何假设，另一方面它作为决策树的拓展模型仍然具有一定的解释性。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型借助灵活且易拓展的XGBoost梯度提升树框架实现了提出的HitBoost生存分析方法。
+本章首先从模型框架和优化方法两个方面介绍了提出的HitBoost生存分析方法。简单来说，该方法基于传统的FHT首次命中时间模型，使用梯度提升树实现。具体地，HitBoost方法使用多输出的梯度提升树直接预测感兴趣的事件发生随时间的概率分布，并且把生存分析相关的极大似然估计函数作为目标函数，同时还另外加入凸函数近似的一致性指数来调整风险排序。一方面它不再对个体风险函数的形式做出任何假设，另一方面它作为决策树的拓展模型仍然具有一定的解释性。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型借助灵活且易拓展的XGBoost梯度提升树框架实现了提出的HitBoost生存分析方法。
 
 然后，本章介绍了四个公开的生存数据集：WHAS，SUPPORT，METABRIC，ROTT2。主要从常用统计量和人群生存曲线的角度给出了数据集的基本情况。最后，本章给出了HitBoost方法在公开数据集上的实验结果。HitBoost预测模型的实验结果显示，在独立测试集的预测以及对个体生存函数的估计上，我们提出的基于梯度提升树的优化方法相比一类遵循风险假设的模型，以及随机生存森林来说，具有更好的预测性能及风险区分度。

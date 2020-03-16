@@ -45,9 +45,9 @@ e^{f(x)} =\frac{h(t\mid x)}{h_0 (t)} \label{F4}
 \begin{equation}
 P(t)\ \sim \ W(t \mid s_0, \mu, \sigma^2=1),\ t\ge 0 \label{F7}
 \end{equation}
-其中随机过程$P(t)$是一个维纳过程（Wiener Process），它含有初始状态参数$s_0$和模型参数$\mu, \sigma$。这些参数和个体协变量通过链接函数$ln⁡(s_0 )=\lambda_1^T x,\ \mu = \lambda_2^T x$建立联系。参数$\lambda_1,\lambda_2\in \mathbb{R}^m$通过极大化的下式所示的对数似然估计函数估计得到：
+其中随机过程$P(t)$是一个维纳过程（Wiener Process），它含有初始状态参数$s_0$和模型参数$\mu, \sigma$。这些参数和个体协变量通过链接函数$\ln⁡(s_0 )=\lambda_1^T x,\ \mu = \lambda_2^T x$建立联系。参数$\lambda_1,\lambda_2\in \mathbb{R}^m$通过极大化的下式所示的对数似然估计函数估计得到：
 \begin{equation}
-ln(L)=\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot ln(\hat{y}_{T_i}^i) + I(\delta_i=0) \cdot ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right] \label{F8}
+\ln(L)=\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0) \cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right] \label{F8}
 \end{equation}
 其中$\hat{y}_t^i$表示FHT模型预测的个体$i$在$t$时刻首次发生事件的概率，$I(\cdot)$表示示性函数（Indicator Function）。FHT模型的输出最终为个体首次发生事件时间的概率分布。Stikbakke提出的FhtBoost方法 \citing{Stikbakke2019fht}使用Boosting方法训练原始的FHT模型，主要用于处理生存数据维度过高的问题。
 

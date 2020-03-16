@@ -1,42 +1,55 @@
 \chapter{BecCox生存分析方法}
 
-经典的Cox比例风险模型，以及Cox流派的一系列模型，虽然都遵循比例风险假设，但是仍然有着广泛的应用场景。考虑到Cox流派生存分析方法存在的不足，如偏似然估计函数的不够精确以及模型容易过拟合，我们在传统的Cox比例风险模型基础上研究了基于梯度提升树的优化方法，主要改进了模型的目标函数，结合XGBoost框架提出了BecCox生存分析方法。下面我们将从模型原理，目标函数及梯度计算三个方面详细介绍该方法。
+经典的Cox比例风险模型，以及Cox流派的一系列模型，虽然都遵循比例风险假设，但是仍然有着广泛的应用场景。考虑到Cox流派生存分析方法存在的不足，如偏似然估计函数的不够精确以及模型容易过拟合，我们在传统的Cox比例风险模型基础上研究了基于梯度提升树的优化方法，主要改进了模型的目标函数，结合XGBoost框架提出了BecCox（Boosting efron and concordance-index in Cox model）生存分析方法。下面我们将从模型框架和优化方法两个方面详细介绍该方法，然后给出实验结果。
 
-\section{BecCox}
+\section{模型框架}
 
-\subsection{模型介绍}
+BecCox生存分析方法主要针对一类比例风险模型的目标函数进行改进，目的在于提升它们在各个场景下的预测性能。其模型架构如图\ref{pic21}所示。该方法的输入是协变量，它来自生存数据；输出是对数风险比例$\hat{y}$，由一个梯度提升树模型给出。在定义了BecCox模型的目标函数后，模型将会在每一轮迭代或Boosting（设共$M$次迭代）的过程中，计算目标函数关于模型预测值的一阶梯度$g$和二阶梯度$h$，拟合一颗最优的回归树。拟合最优回归树的过程中，$g$和$h$梯度信息用于寻找使目标函数极小的节点分裂，以及计算每个叶子节点估计量。最终，模型会将个体$i$落入所有梯度提升树叶子节点处的估计量相加，作为其对数风险比例的预测值，即$\hat{y}_i = f(x_i) = \sum_{t=1}^{M} \mathcal{F}_t (x_i)$。
 
-BecCox生存分析方法主要针对一类比例风险模型的目标函数进行改进，目的在于提升它们在各个场景下的预测性能。该方法的输入是协变量，它来自生存数据；输出是对数风险比例$\hat{y}$，由一个梯度提升树模型给出。在定义了BecCox模型的目标函数后，模型将会在每一轮迭代或Boosting（设共$M$次迭代）的过程中，计算目标函数关于模型预测值的一阶梯度$g$和二阶梯度$h$，拟合一颗最优的回归树。拟合最优回归树的过程中，$g$和$h$梯度信息用于寻找使目标函数极小的节点分裂，以及计算每个叶子节点估计量。最终，模型会将个体$i$落入所有梯度提升树叶子节点处的估计量相加，作为其对数风险比例的预测值，即：$$
-\hat{y}_i = f(x_i) = \sum_{t=1}^{M} \mathcal{F}_t (x_i)
-$$
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{pic21.png}
+\caption{BecCox模型框架}
+\label{pic21}
+\end{figure}
 
 现有的基于梯度提升树的Cox比例风险模型，通常是通过优化和Cox比例风险模型相同的偏似然估计函数来训练生存预测模型，最后预测个体的风险比例，进而得到个体风险函数或生存函数的估计。然而，如果生存数据中存在多数的Ties，也就是生存数据中普遍存在某一时刻多个个体同时发生事件的情况；那么，由Cox比例风险模型给出的Breslow偏似然估计函数对真实似然估计函数的近似会不够准确，这样会导致模型参数的估计出现偏差，从而影响模型的预测性能。为解决该问题，我们采用了更加精确的偏似然估计函数作为BecCox生存分析方法的目标函数，并且加入凸函数近似的一致性指数作为目标函数的一部分，用来调整风险排序，最后达到提高模型预测性能的目的。虽然BecCox生存分析方法仍然属于一类基于比例风险假设的模型，其估计的风险函数具有特定的数学形式，但是在某些特殊场景下，如生存数据通过了比例风险假设检验或需要量化个体的风险分值时，这一类基于比例风险假设的模型仍然有着特定的优势。
 
+\section{优化方法}
+
 \subsection{目标函数}
 
-对于存在多数Ties的生存数据，Kalbfleisch和Prentice \citing{Kalbfleisch1986The} 认为处理Ties最自然的方式是对同一时刻发生事件的所有个体考虑其所有可能发生事件的次序，他们给出了精确的偏似然函数形式如下：$$
+对于存在多数Ties的生存数据，Kalbfleisch和Prentice \citing{Kalbfleisch1986The} 认为处理Ties最自然的方式是对同一时刻发生事件的所有个体考虑其所有可能发生事件的次序，他们给出了精确的偏似然函数形式如下：
+\begin{equation}
 \mathcal{L}_{kp} = \prod_{t\in D} \frac{e^{\sum_{j\in q(t)} \hat{y}_j}}{\sum_{P\in Q_t} \prod_{l=1}^{C_t} [\sum_{j \in R(t)-\{p_1,\cdots ,p_{l-1}\}} e^{\hat{y}_j}]}
-$$ 其中$Q_t$表示在$t$时刻观测到$C_t$个发生事件的患者的$C_t!$个排列的集合，$P=\{p_1,p_2,\cdots ,p_{C_t}\}$为$Q_t$中的一个元素。从$\mathcal{L}_{kp}$的表达式可以看出，当$C_t$较大时，优化精确的似然估计函数需要巨大的时间消耗。Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}（如式 \eqref{F6}所示）不再考虑同一时刻发生事件的次序，而是直接累加在$t$时刻处于观测期的所有个体（集合$R(t)$内的所有个体）的风险比例。而Efron近似的偏似然估计函数 \citing{Bradley1977The}也没有考虑同一时刻发生事件的次序，但是考虑了减低在$t$时刻发生事件的个体的风险比例的权值，其表达式如下：$$
+\end{equation}
+其中$Q_t$表示在$t$时刻观测到$C_t$个发生事件的患者的$C_t!$个排列的集合，$P=\{p_1,p_2,\cdots ,p_{C_t}\}$为$Q_t$中的一个元素。从$\mathcal{L}_{kp}$的表达式可以看出，当$C_t$较大时，优化精确的似然估计函数需要巨大的时间消耗。Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}（如式 \eqref{F6}所示）不再考虑同一时刻发生事件的次序，而是直接累加在$t$时刻处于观测期的所有个体（集合$R(t)$内的所有个体）的风险比例。而Efron近似的偏似然估计函数 \citing{Bradley1977The}也没有考虑同一时刻发生事件的次序，但是考虑了减低在$t$时刻发生事件的个体的风险比例的权值，其表达式如下：
+\begin{equation}
 \mathcal{L}_{e} = \prod_{t\in D} \frac{e^{\sum_{j\in q(t)} \hat{y}_j}}{\prod_{l=1}^{C_t} \left[\sum_{j \in R(t)} e^{\hat{y}_j} - \frac{l-1}{C_t} \sum_{j \in q(t)} e^{\hat{y}_j} \right]}
-$$ 对比可以发现Efron近似更加接近精确的偏似然估计函数，而且当$C_t$越大时，Breslow近似产生的偏差会越大，这会在一定程度上影响模型的优化以及对风险比例的估计。
+\end{equation}
+对比可以发现Efron近似更加接近精确的偏似然估计函数，而且当$C_t$越大时，Breslow近似产生的偏差会越大，这会在一定程度上影响模型的优化以及对风险比例的估计。
 
 BecCox模型优化的目标函数同HitBoost模型类似，分为以下两个部分：
 \begin{enumerate}
 	\item $L_1$，Efron近似的偏似然估计函数的负对数；
 	\item $L_2$，凸函数近似的一致性指数，作为损失函数的一部分用于调整风险排序。
 \end{enumerate}
-所以，最终BecCox方法需要最小化的目标函数是：$$
+所以，最终BecCox方法需要最小化的目标函数是：
+\begin{equation}
 L = \theta \cdot L_1 + (1- \theta) \cdot L_2
-$$
-其中$\theta \in \mathbb{R}$且满足$0 \le \theta \le 1$，是模型的超参数之一。目标函数中的$L_1$项通过对$\mathcal{L}_e$取负对数得到：$$
-L_1 = -ln\mathcal{L}_e = \sum_{t\in D} \left\{ \sum_{j\in q(t)} [ln(SR(t)-w_j\cdot SD(t))-\hat{y}_j] \right\}
-$$ 其中$SR(t)=\sum_{j\in R(t)} e^{\hat{y}_j}$ 表示在$t$时刻处于观察期的所有个体风险比例之和；$SD(t)=\sum_{j\in q(t)} e^{\hat{y}_j}$表示在$t$时刻所有死亡个体风险比例之和；$w_j=(l-1)/C_t, l=1,\cdots,C_t$，表示$t$时刻发生事件个体集合$q(t)$中每个元素的权值。目标函数中的$L_2$项和HitBoost方法相同，只是这里直接使用模型输出值$\hat{y}_i$代替个体$i$的预测风险：$$
+\end{equation}
+其中$\theta \in \mathbb{R}$且满足$0 \le \theta \le 1$，是模型的超参数之一。目标函数中的$L_1$项通过对$\mathcal{L}_e$取负对数得到：
+\begin{equation}
+L_1 = -\ln\mathcal{L}_e = \sum_{t\in D} \left\{ \sum_{j\in q(t)} [\ln(SR(t)-w_j\cdot SD(t))-\hat{y}_j] \right\}
+\end{equation}
+其中$SR(t)=\sum_{j\in R(t)} e^{\hat{y}_j}$ 表示在$t$时刻处于观察期的所有个体风险比例之和；$SD(t)=\sum_{j\in q(t)} e^{\hat{y}_j}$表示在$t$时刻所有死亡个体风险比例之和；$w_j=(l-1)/C_t, l=1,\cdots,C_t$，表示$t$时刻发生事件个体集合$q(t)$中每个元素的权值。目标函数中的$L_2$项和HitBoost方法相同，只是这里直接使用模型输出值$\hat{y}_i$代替个体$i$的预测风险：
+\begin{equation}
 L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{y}_i, \hat{y}_j)}{\sum_{(i,j)\in \Omega} W_{i,j}}
-$$ 其中$W_{i,j}=-(\hat{y}_i-\hat{y}_j)$，$\phi$函数的定义保持不变。
+\end{equation}
+其中$W_{i,j}=-(\hat{y}_i-\hat{y}_j)$，$\phi$函数的定义保持不变。
 
 \subsection{梯度计算}
 
-借助灵活且易拓展的梯度提升树框架XGBoost，我们实现了提出的BecCox生存分析方法。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录中给出。
+借助灵活且易拓展的梯度提升树框架XGBoost，我们实现了提出的BecCox生存分析方法。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录A中给出。
     
 为了方便推导目标函数$L_1$项的一阶梯度和二阶梯度，我们先给出定义\ref{def:1}和\ref{def:2}，然后给出定理\ref{thm:2.1}和\ref{thm:2.2}。
 
@@ -78,18 +91,21 @@ g_k - (e^{\hat{y}_k})^2 \sum_{t\le T_k} \nu(t) & \text{if } \delta_k = 0.
 $$
 \end{theorem}
 
-事实上，和HitBoost目标函数$L_2$项的推导类似，BecCox目标函数$L_2$项只是把模型预测值替换为了一个实数，而不是一个向量。类似地，在推导BecCox目标函数$L_2$项的梯度前，我们首先介绍一些符号约定。我们定义和个体$k$有关的两个互不相交子集$$
+事实上，和HitBoost目标函数$L_2$项的推导类似，BecCox目标函数$L_2$项只是把模型预测值替换为了一个实数，而不是一个向量。类似地，在推导BecCox目标函数$L_2$项的梯度前，我们首先介绍一些符号约定。我们定义和个体$k$有关的两个互不相交子集
+\begin{equation}
 \Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}
-$$
-和$$
+\end{equation}
+和
+\begin{equation}
 \Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}
-$$
-分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设BecCox目标函数$L_2$项的分母和分子分别为$\alpha$和$\beta$，即\[
+\end{equation}
+分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设BecCox目标函数$L_2$项的分母和分子分别为$\alpha$和$\beta$，即
+\begin{equation}
 \begin{split}
 \alpha &= \sum_{(i,j)\in \Omega} W_{i,j}\\
 \beta &= \sum_{(i,j)\in \Omega} W_{i,j} \cdot \phi\left(\hat{y}_i, \hat{y}_j \right)
 \end{split}
-\]
+\end{equation}
 我们有定理\ref{thm:2.3}和\ref{thm:2.4}。
 
 \begin{theorem}\label{thm:2.3}
@@ -132,15 +148,21 @@ $$ 其中\[
 \]
 \end{theorem}
 
-由定理\ref{thm:2.1}，\ref{thm:2.2}，\ref{thm:2.3}和\ref{thm:2.4}，以及$$
+由定理\ref{thm:2.1}，\ref{thm:2.2}，\ref{thm:2.3}和\ref{thm:2.4}，以及
+\begin{equation}
 L=\theta\cdot L_1 + (1-\theta)\cdot L_2= \theta\cdot L_1 + (1-\theta)\cdot \frac{\beta}{\alpha}
-$$ 我们可以使用链式法则轻松推导出BecCox目标函数$L$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}$$
+\end{equation}
+我们可以使用链式法则轻松推导出BecCox目标函数$L$关于模型预测值$\hat{y}_t^k$的一阶梯度
+\begin{equation}
 \frac{\partial L}{\partial \hat{y}_k}=\theta\cdot \frac{\partial L_1}{\partial \hat{y}_k} + (1-\theta)\cdot \omega(\alpha, \beta)
-$$ 其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'}}{\alpha^2}$。BecCox目标函数$L$关于模型预测值$\hat{y}_k$的\textbf{二阶梯度}$$
+\end{equation}
+其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'}}{\alpha^2}$。BecCox目标函数$L$关于模型预测值$\hat{y}_k$的二阶梯度
+\begin{equation}
 \frac{\partial^2 L}{\partial \hat{y}_k}=\theta\cdot \frac{\partial^2 L_1}{\partial \hat{y}_k} + (1-\theta)\cdot \tau(\alpha, \beta)
-$$ 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
+\end{equation} 
+其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
 
-在实现BecCox生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率，且缩短了模型拟合时间。具体实现可以参考源代码\emph{https://github.com/liupei101/libsurv}。
+在实现BecCox生存分析方法的过程中，我们在计算目标函数梯度部分使用了向量化技巧，显著提高了计算效率，且缩短了模型拟合时间。具体实现可参考后文附录B。
 
 \section{实验结果}
 
@@ -155,20 +177,20 @@ $$ 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\
 \end{itemize}
 我们借助相关软件包实现了这些对比方法，其中CoxPH方法来自Python包lifelines \citing{lifelines}，CoxBoost方法来自R包mboost \citing{mboost}，CoxNet方法和GBM方法来自Python包sksurv \citing{sksurv}。
 
+类似地，模型训练所使用的超参数是通过贝叶斯超参数优化方法 \citing{Bergstra2013hpopt}得到的。我们在各个数据集的训练集上使用10折交叉验证来评估每一组搜索超参数的好坏，BecCox模型在各个数据集上的贝叶斯超参数搜索过程如图\ref{pic10}所示。图中横坐标表示当前搜索次数，纵坐标表示当前搜索的超参数组合对应的模型性能，红色实心点表示最佳参数搜索点。BecCox模型的超参数包括$\theta$，$\gamma$，$n$，以及XGBoost框架原有的超参数，其设置和搜索空间同HitBoost模型（见本文3.3.1节）。各个数据集超参数搜索得到的最佳超参数组合将被用于最终的模型训练。
+
 \begin{figure}[H]
 \includegraphics[width=\textwidth]{pic10.png}
 \caption{BecCox模型贝叶斯超参数搜索过程}
 \label{pic10}
 \end{figure}
 
-类似地，模型训练所使用的超参数是通过贝叶斯超参数优化方法 \citing{Bergstra2013hpopt}得到的。我们在各个数据集的训练集上使用10折交叉验证来评估每一组搜索超参数的好坏，BecCox模型在各个数据集上的贝叶斯超参数搜索过程如图\ref{pic10}所示。图中横坐标表示当前搜索次数，纵坐标表示当前搜索的超参数组合对应的模型性能，红色实心点表示最佳参数搜索点。BecCox模型的超参数包括$\theta$，$\gamma$，$n$，以及XGBoost框架原有的超参数，其设置和搜索空间同HitBoost模型（见本文3.3.1节）。各个数据集超参数搜索得到的最佳超参数组合将被用于最终的模型训练。
-
 \subsection{模型性能}
 
 完成贝叶斯超参数优化后，我们把参数优化的结果作为各个模型的参数，然后在各个数据集的训练集上拟合得到了BecCox模型，最后使用一致性指数（式\eqref{F13}所示）作为模型性能评估指标，在独立测试集上考查了BecCox以及用于比较的模型的预测性能，结果如表\ref{table05}所示。
 
 \begin{table}[h]
-\caption{BecCox模型性能对比。星号“*”表示我们提出的方法。}
+\caption{BecCox模型性能对比（星号“*”表示我们提出的方法）}
 \begin{tabular}{ccccc}
 \toprule
 方法 & WHAS & SUPPORT & METABRIC & ROTT2 \\ 
@@ -183,7 +205,7 @@ GBM & 0.894794 & 0.621311 & 0.643049 & 0.687475 \\
 \label{table05}
 \end{table}
 
-从表\ref{table05}给出的评估结果我们可以看出，BecCox方法在四个公开数据集上的预测性能都超过了其他同类的四种生存分析方法。在SUPPORT数据集上，BecCox模型相比最好的GBM模型在一致性指数上提升了大概1.7\%。在其余三个数据集上，BecCox模型在一致性指数上的提升只有1\%左右。理论上来看，当数据中出现的Ties越多时，BecCox模型对目标函数的估计越精确，它对个体风险比例的估计也会更加精确。从实验结果可以看出，BecCox方法相比同一类基于风险比例假设的生存分析方法有着更好的风险区分度。它在一类基于风险比例假设的生存分析方法的基础上，使用更加精确的偏似然估计函数作为主要目标函数，并且加入了可以调整风险排序的目标函数项，使得该方法相比同类的方法能够更加准确地预测风险比例。\textbf{值的注意的是}，由于BecCox方法仍然遵循风险比例的假设，所以它更加适用于生存数据通过了风险比例假设检验或目标在于个性化风险分值预测的数据场景中，而在生存数据分布未知的情况下，其实用性是有限的。
+从表\ref{table05}给出的评估结果我们可以看出，BecCox方法在四个公开数据集上的预测性能都超过了其他同类的四种生存分析方法。在SUPPORT数据集上，BecCox模型相比最好的GBM模型在一致性指数上提升了大概1.7\%。在其余三个数据集上，BecCox模型在一致性指数上的提升只有1\%左右。理论上来看，当数据中出现的Ties越多时，BecCox模型对目标函数的估计越精确，它对个体风险比例的估计也会更加精确。从实验结果可以看出，BecCox方法相比同一类基于风险比例假设的生存分析方法有着更好的风险区分度。它在一类基于风险比例假设的生存分析方法的基础上，使用更加精确的偏似然估计函数作为主要目标函数，并且加入了可以调整风险排序的目标函数项，使得该方法相比同类的方法能够更加准确地预测风险比例。值的注意的是，由于BecCox方法仍然遵循风险比例的假设，所以它更加适用于生存数据通过了风险比例假设检验或目标在于个性化风险分值预测的数据场景中，而在生存数据分布未知的情况下，其实用性是有限的。
 
 同样地，我们使用图\ref{pic11}给出了BecCox模型在各个数据集上的拟合情况。从图中可以看出，BecCox模型在四个数据集上最终也都趋于稳定，未出现过拟合的现象。为了充分地观察模型在每一步迭代时的拟合情况，只有迭代次数nrounds被统一设置为了200。图中曲线上的空心点表示了BecCox模型最终在各个数据集上的实际停止迭代点，它是由贝叶斯超参数搜索得到的。
 
@@ -195,6 +217,6 @@ GBM & 0.894794 & 0.621311 & 0.643049 & 0.687475 \\
 
 \section{本章小结}
 
-本章首先从原理，目标函数和实现三个方面介绍了提出的BecCox生存分析方法。该方法基于传统的Cox比例风险模型，使用梯度提升树实现。它和现有基于梯度提升树的生存分析方法类似，使用单个输出的梯度提升树预测感兴趣的事件发生的风险比例，但是在目标函数上，我们使用相比之前更加精确的偏似然估计函数，并且添加凸函数近似的一致性指数来优化模型的预测输出。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型，借助灵活且易拓展的XGBoost梯度提升树框架，实现了提出的BecCox方法。
+本章首先从模型框架和优化方法两个方面介绍了提出的BecCox生存分析方法。该方法基于传统的Cox比例风险模型，使用梯度提升树实现。它和现有基于梯度提升树的生存分析方法类似，使用单个输出的梯度提升树预测感兴趣的事件发生的风险比例，但是在目标函数上，我们使用相比之前更加精确的偏似然估计函数，并且添加凸函数近似的一致性指数来优化模型的预测输出。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型，借助灵活且易拓展的XGBoost梯度提升树框架，实现了提出的BecCox方法。
 
 从模型在四个公开数据集上的评估结果来看，我们提出的基于Cox比例风险模型的优化方法有着更好的风险区分度。当生存数据通过风险比例假设检验，或者在个性化预测风险分值场景中，BecCox方法可以作为一种有效的方法用于建立生存预测模型；而在生存数据分布未知的情况下，其适用范围是有限的。
