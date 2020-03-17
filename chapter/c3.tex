@@ -7,11 +7,11 @@
 
 \section{模型框架}
 
-为了不再依赖个体风险函数的任何假设，直接学习协变量与首次发生事件时间概率分布之间潜在的关系，同时保证模型的特征解释性，我们提出了一种基于多输出的梯度提升树的生存分析方法——HitBoost。如图\ref{pic01}所示，HitBoost模型是一个多输出的梯度提升树模型，它学习并且直接估计在给定协变量$x^*$的条件下，在$t^*$时刻首次发生事件的概率$P(t = t^*,\delta = 1\mid x = x^* )$。HitBoost模型的输入为协变量（或生存数据），每一个输出由一个单独的梯度提升树模型给出。作为一个前向加法模型，每个单独的梯度提升树模型由多棵决策树组成。多个独立的梯度提升树模型经过一个softmax层转化为最终的输出预测值。模型预测值$\hat{y}$是一个向量，写作：
+为了不再依赖个体风险函数的任何假设，直接学习协变量与首次发生事件时间概率分布之间潜在的关系，同时保证模型的特征解释性，我们提出了一种基于多输出的梯度提升树的生存分析方法——HitBoost。如图\ref{pic01}所示，HitBoost模型是一个多输出的梯度提升树模型，它学习并且直接估计在给定协变量$x^*$的条件下，在$t^*$时刻首次发生事件的概率$P(t = t^*,\delta = 1\mid x = x^* )$。HitBoost模型的输入为协变量（或生存数据），每一个输出由一个单独的梯度提升树模型给出。作为一个前向加法模型，每个单独的梯度提升树模型由多棵决策树组成。多个独立的梯度提升树模型经过一个softmax层转化为最终的输出预测值。模型预测值$\hat{y}$是一个向量，写作
 \begin{equation}
 \hat{y}=\left[\hat{y}_1, \hat{y}_1, \dots, \hat{y}_{T_{max}}, \hat{y}_{T_{max}+1}\right] \label{F31}
 \end{equation}
-其中$T_{max}$表示研究对象中最长的个体随访时间。给定某个个体协变量$x$，模型的一个输出$\hat{y}_t$表示该个体在$t$时刻发生事件的预测概率值$\hat{P}(t, \delta = 1 \mid x)$。因为$\hat{y}_{T_{max}+1}=1-\sum_{t=1}^{T_{max}} \hat{y}_t$，所以预测值$\hat{P}(T_{max}+1, \delta = 1 \mid x)$表示协变量为$x$的个体在整个研究过程中未观测到事件发生的概率。这里，我们定义个体$i$的累积事件函数CIF（Cumulative Incidence Function）来表示个体$i$在$t$时刻或$t$时刻之前发生事件的累积概率，其表达式如下：
+其中$T_{max}$表示研究对象中最长的个体随访时间。给定某个个体协变量$x$，模型的一个输出$\hat{y}_t$表示该个体在$t$时刻发生事件的预测概率值$\hat{P}(t, \delta = 1 \mid x)$。因为$\hat{y}_{T_{max}+1}=1-\sum_{t=1}^{T_{max}} \hat{y}_t$，所以预测值$\hat{P}(T_{max}+1, \delta = 1 \mid x)$表示协变量为$x$的个体在整个研究过程中未观测到事件发生的概率。这里，我们定义个体$i$的累积事件函数CIF（Cumulative Incidence Function）来表示个体$i$在$t$时刻或$t$时刻之前发生事件的累积概率，其表达式为
 \begin{equation}
 \hat{F}(i, t) = P(\tau \le t, \delta = 1 \mid x_i) = \sum_{\tau \le t} \hat{y}_{\tau}^i \label{F32}
 \end{equation}
@@ -33,13 +33,13 @@
     \item $L_1$，首次命中时间FHT模型中的极大似然估计函数，由公式\eqref{F8}给出的；
     \item $L_2$，凸函数近似的一致性指数，它作为损失函数的一部分用于调整风险排序。
 \end{enumerate}
-所以，最终HitBoost模型需要最小化的目标函数是：
+所以，最终HitBoost模型需要最小化的目标函数是
 \begin{equation}
 L=\theta \cdot L_1 + (1-\theta) \cdot L_2 \label{F33}
 \end{equation}
 其中$\theta \in \mathbb{R}$且满足 $0 \le \theta \le 1$，是模型需要调整的超参数之一。
  
-参考表达式\eqref{F8}可知，需要极小化的HitBoost目标函数$L_1$项如下：
+参考表达式\eqref{F8}可知，需要极小化的HitBoost目标函数$L_1$项为
 \begin{equation}
 L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]
 \end{equation}
@@ -95,7 +95,7 @@ $$
 \begin{equation}
 \Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}
 \end{equation}
-分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设$L_2$的分母和分子分别为$\alpha$和$\beta$，即：
+分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设$L_2$的分母和分子分别为$\alpha$和$\beta$，即
 \begin{equation}
 \begin{split}
 \alpha &= \sum_{(i,j)\in \Omega} W_{i,j}\\

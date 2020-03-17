@@ -5,17 +5,17 @@
 
 假设生存数据中不存在某一时刻多个个体同时发生事件的情况。令集合$D=\{t_i \mid i=1,\dots,k\}$表示观测到事件发生的k个时间点，集合$R(t)=\{i \mid T_i\ge t\}$表示生存数据中在t时刻处于观测期（At risk）的个体。当观测时间使用连续变量来表示的时候，理想情况下不会出现在同一时刻发生多个事件。但在实际数据中，观测时间通常以离散方式给出，这样就导致了多数生存数据中存在某一时刻多个个体同时发生事件的情况，这种情况被称之为Ties。当用于生存分析的数据集$A$中存在Ties时，为了后文表述的方便，我们先定义几个全文通用的符号。设集合$D=\{t_i \mid i=1,\dots,k\},t_1<t_2<\cdots<t_k$表示生存数据中发生事件的$k$个不同的时间点集合，$N(t)=\{i \mid T_i=t\}$表示观测时间等于t的个体集合，$q(t)=\{i \mid T_i=t,E_i=1\}$表示在$t$时刻发生事件的个体集合，$C_t=\mid q(t) \mid$表示在时刻$t$发生事件的个体总数。
 
-生存分析主要研究在观测时间点发生特定事件的概率（Probability of time to event），寻找个体协变量与个体生存状态（观测时间和观测事件状态）之间的潜在关系。生存函数（Survival function）是生存分析方法关心的主要内容之一。生存函数 $S(t)=Pr(T>t)$ 表示生存时间$T$超过$t$的概率，它定义了直到$t$时刻还未发生死亡（或感兴趣的事件）的概率。而风险函数（Hazard function）则是定义了在生存时间大于$t$的条件下在$t$时刻发生事件的概率，所以$t$时刻的风险函数$h(t)$可以表示为：
+生存分析主要研究在观测时间点发生特定事件的概率（Probability of time to event），寻找个体协变量与个体生存状态（观测时间和观测事件状态）之间的潜在关系。生存函数（Survival function）是生存分析方法关心的主要内容之一。生存函数 $S(t)=Pr(T>t)$ 表示生存时间$T$超过$t$的概率，它定义了直到$t$时刻还未发生死亡（或感兴趣的事件）的概率。而风险函数（Hazard function）则是定义了在生存时间大于$t$的条件下在$t$时刻发生事件的概率，所以$t$时刻的风险函数$h(t)$可以表示为
 \begin{equation}
 h(t)=\lim_{\delta t \rightarrow 0} \frac{Pr(t \le T\le t + \delta t \mid T>t)}{\delta t}
     =\frac{-S^{'}(t)}{S(t)} \label{F1}
 \end{equation}
 
-所以我们可以得到生存函数$S(t)$与风险函数$h(t)$之间的关系如下：
+所以我们可以得到生存函数$S(t)$与风险函数$h(t)$之间的关系如下
 \begin{equation}
 S(t)=exp⁡\left(-\int_0^{t} h(z)\,\mathrm{d}z\right)=exp⁡(-H(t)) \label{F2}
 \end{equation}
-其中$H(t)=\int_0^{t} h(z)\,\mathrm{d}z$表示累积风险函数（Cumulative hazard function）。而首次发生事件时间的概率密度函数$f(t)$为其累积分布函数$F(t)$对时间的导数，所以我们可以推导得到：
+其中$H(t)=\int_0^{t} h(z)\,\mathrm{d}z$表示累积风险函数（Cumulative hazard function）。而首次发生事件时间的概率密度函数$f(t)$为其累积分布函数$F(t)$对时间的导数，所以我们可以推导得到
 \begin{equation}
 f(t)=\frac{\mathrm{d}F(t)}{\mathrm{d}t}=\frac{\mathrm{d}(1-S(t))}{\mathrm{d}t} \label{F3}
 \end{equation}
@@ -26,7 +26,7 @@ f(t)=\frac{\mathrm{d}F(t)}{\mathrm{d}t}=\frac{\mathrm{d}(1-S(t))}{\mathrm{d}t} \
 
 为了分析生存数据，通常需要借助生存分析方法。传统的生存分析方法大多从统计学的角度来分析生存数据。这类方法可以分为非参数方法，半参数方法和参数方法。非参数方法主要包括Kaplan-Meier估计方法 \citing{Kaplan1958Nonparametric} 和Nelson-Aalen估计方法 \citing{Aalen1978non}，他们分别从生存数据中的事件和时间出发，直接估计人群的生存函数和人群的累积风险函数。非参数的统计生存分析方法一般只用于直观理解研究对象的整体生存状态，如生存率和风险趋势等，不能用于个性化预测。
 
-半参数的统计生存分析方法很好地解决了个性化预测的问题。它考虑了个体协变量对个体生存状态的影响，使用线性模型预测个体的生存状态。半参数的统计生存分析方法的基础是Cox比例风险模型，由Cox在1972年提出 \citing{COX1972Regression}。该模型的直观性和易解释性，使得它成为了目前使用最为广泛的统计生存分析方法之一。Cox比例风险模型本质上是一个线性模型，它假设个体的风险函数与人群的基准风险函数之比为一个不随时间改变的常数，即风险比例：
+半参数的统计生存分析方法很好地解决了个性化预测的问题。它考虑了个体协变量对个体生存状态的影响，使用线性模型预测个体的生存状态。半参数的统计生存分析方法的基础是Cox比例风险模型，由Cox在1972年提出 \citing{COX1972Regression}。该模型的直观性和易解释性，使得它成为了目前使用最为广泛的统计生存分析方法之一。Cox比例风险模型本质上是一个线性模型，它假设个体的风险函数与人群的基准风险函数之比为一个不随时间改变的常数，即风险比例
 \begin{equation}
 e^{f(x)} =\frac{h(t\mid x)}{h_0 (t)} \label{F4}
 \end{equation}
@@ -34,18 +34,18 @@ e^{f(x)} =\frac{h(t\mid x)}{h_0 (t)} \label{F4}
 \begin{equation}
 \mathcal{L}_c = \prod_{i=1}^k \frac{e^{\hat{y}_i}}{\sum_{j\in R(t_i)} \hat{y}_j} \label{F5}
 \end{equation}
-其中$\hat{y}_i=f(x_i)=\hat{\theta}^T x_i$ 表示模型对个体$i$的对数风险比例的估计值。当生存数据中出现ties时，出于计算的方便，生存分析算法常采用Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}作为模型优化目标，其表达式如下：
+其中$\hat{y}_i=f(x_i)=\hat{\theta}^T x_i$ 表示模型对个体$i$的对数风险比例的估计值。当生存数据中出现ties时，出于计算的方便，生存分析算法常采用Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}作为模型优化目标，其表达式为
 \begin{equation}
 \mathcal{L}_B = \prod_{t\in D} \frac{e^{\sum_{j\in q(t)} \hat{y}_j}}{[\sum_{j\in R(t)} e^{\hat{y}_j}]^{C_t}} \label{F6}
 \end{equation}
 
 当使用生存数据训练完Cox比例风险模型后，我们就可以通过向模型输入个体协变量来预测其对数风险比例，然后使用公式 \eqref{F2}估计该个体的生存函数，同理可以计算得到其它的函数。在Cox比例风险模型的基础上，同样基于统计理论的生存分析方法还有：CoxNet \citing{Goeman2010L1}，Time-Dependent Cox \citing{MARZEC1997On}和CoxBoost \citing{coxboost}。CoxNet主要是在损失函数中加入模型参数正则化惩罚项来解决数据维度过高的问题，Time-Dependent Cox是针对个体的协变量会随时间改变的一类生存数据提出的生存分析方法，而CoxBoost主要使用梯度提升方法来训练和拟合原始的Cox比例风险模型。
 
-统计生存分析方法中另外一种半参数线性预测模型是ThresReg，它主要研究事件首次发生时间FHT（First Hitting Time），可见于Lee 和Whitmore 于2006年的研究工作 \citing{Lee2006Threshold, Lee2010Threshold}。与Cox比例风险模型不同的是，它假设个体的风险函数是某个固定形式的带参数的随机过程，而不再是一个不随时间变化的风险比例，其表达式如下：
+统计生存分析方法中另外一种半参数线性预测模型是ThresReg，它主要研究事件首次发生时间FHT（First Hitting Time），可见于Lee 和Whitmore 于2006年的研究工作 \citing{Lee2006Threshold, Lee2010Threshold}。与Cox比例风险模型不同的是，它假设个体的风险函数是某个固定形式的带参数的随机过程，而不再是一个不随时间变化的风险比例，其表达式为
 \begin{equation}
 P(t)\ \sim \ W(t \mid s_0, \mu, \sigma^2=1),\ t\ge 0 \label{F7}
 \end{equation}
-其中随机过程$P(t)$是一个维纳过程（Wiener Process），它含有初始状态参数$s_0$和模型参数$\mu, \sigma$。这些参数和个体协变量通过链接函数$\ln⁡(s_0 )=\lambda_1^T x,\ \mu = \lambda_2^T x$建立联系。参数$\lambda_1,\lambda_2\in \mathbb{R}^m$通过极大化的下式所示的对数似然估计函数估计得到：
+其中随机过程$P(t)$是一个维纳过程（Wiener Process），它含有初始状态参数$s_0$和模型参数$\mu, \sigma$。这些参数和个体协变量通过链接函数$\ln⁡(s_0 )=\lambda_1^T x,\ \mu = \lambda_2^T x$建立联系。参数$\lambda_1,\lambda_2\in \mathbb{R}^m$通过极大化的下式所示的对数似然估计函数估计得到
 \begin{equation}
 \ln(L)=\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0) \cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right] \label{F8}
 \end{equation}
@@ -59,7 +59,7 @@ P(t)\ \sim \ W(t \mid s_0, \mu, \sigma^2=1),\ t\ge 0 \label{F7}
 
 随机森林作为决策树模型中的Bagging类别，被应用到了由Ishwaran等人提出的随机生存森林中 \citing{Ishwaran2008Random}（Random Survival Forest）。随机生存森林的核心思想是在随机森林原有框架下，使用log-rank指标作为树节点分裂策略，使用Kaplan-Meier估计作为叶子节点估计量来预测落入该叶子节点样本的生存函数，使用Nelson-Aalen估计作为叶子节点估计量来预测落入该叶子节点样本在所有发生事件时间节点的累积风险函数。对于某个个体，随机生存森林估计其累积风险函数是通过多棵树叶子节点累积风险函数估计取平均得到的。随机生存森林主要用于预测患者的生存状态，完全基于生存分析中生存函数和风险函数的无参数估计方法，而不再局限于Cox比例风险模型的假设。但是这种无参数的估计方法，往往依赖样本量，而且容易出现过拟合。
 
-梯度提升树作为决策树模型中的Boosting类别，在各个标准的分类和回归任务上都取得了SOTA的结果 \citing{liping2012logit}。梯度提升树模型（Gradient Boosting Machine）是一个前向加法模型 \citing{Ridgeway1999boost, Friedman2001gbm}，其核心思想是在每轮迭代的过程中生成新的决策树来学习上一轮模型预测的“残差”，最终预测结果由每一轮经过拟合的决策树的预测结果相加得到。具体地，每一轮迭代构建的树模型$\mathcal{F}_t (x)$，需要极小化损失函数$l$，即：
+梯度提升树作为决策树模型中的Boosting类别，在各个标准的分类和回归任务上都取得了SOTA的结果 \citing{liping2012logit}。梯度提升树模型（Gradient Boosting Machine）是一个前向加法模型 \citing{Ridgeway1999boost, Friedman2001gbm}，其核心思想是在每轮迭代的过程中生成新的决策树来学习上一轮模型预测的“残差”，最终预测结果由每一轮经过拟合的决策树的预测结果相加得到。具体地，每一轮迭代构建的树模型$\mathcal{F}_t (x)$，需要极小化损失函数$l$，即
 \begin{equation}
 \mathcal{F}_t = \mathop{\arg\min}_{\mathcal{F}_t} \sum_{i=1}^n l(y_i, \hat{y}_i^{t-1} + \mathcal{F}_t(x_i)) \label{F9}
 \end{equation}
@@ -68,11 +68,11 @@ Ridgeway等人研究的Cox比例风险模型与梯度提升树模型结合的生
 \rho_k = \mathop{\arg\min}_{\rho} \sum_{i\in S_k} l(y_i, \hat{y}_i^{t-1} + \rho) \label{F10}
 \end{equation}算出，该式可以采用牛顿优化方法计算得到。
 
-梯度提升方法的一种变体XGBoost（eXtreme Gradient Boosting） \citing{chen2016xgboost}，由陈天琦等人于2016年提出。它在原梯度提升方法的基础上，加入正则化参数并且更加精确地近似了损失函数，从而得到一种新的节点分裂与叶子节点估计算法。具体地，XGBoost优化的目标函数是加入了正则化项$\Omega$的损失函数，第$t$轮迭代的损失函数表示如下： 
+梯度提升方法的一种变体XGBoost（eXtreme Gradient Boosting） \citing{chen2016xgboost}，由陈天琦等人于2016年提出。它在原梯度提升方法的基础上，加入正则化参数并且更加精确地近似了损失函数，从而得到一种新的节点分裂与叶子节点估计算法。具体地，XGBoost优化的目标函数是加入了正则化项$\Omega$的损失函数，第$t$轮迭代的损失函数表示为 
 \begin{equation}
 \mathcal{L}^{(t)} = \sum_{i=1}^n l(y_i, \hat{y}_i^{t-1} + \mathcal{F}_t(x_i)) + \Omega(\mathcal{F}_t) \label{F11}
 \end{equation}
-对上式进行二阶近似（泰勒展开），得到： 
+对上式进行二阶近似（泰勒展开），得到
 \begin{equation}
 \mathcal{L}^{(t)} \simeq \sum_{i=1}^n \left( l(y_i, \hat{y}_i^{t-1})+g_i\mathcal{F}_t(x_i)+\frac{1}{2} h_i {\mathcal{F}_t}^2 (x_i) \right) \label{F12}
 \end{equation}
@@ -84,11 +84,11 @@ Ridgeway等人研究的Cox比例风险模型与梯度提升树模型结合的生
 
 利用生存分析方法建立生存预测模型后，需要使用特有的评估指标来量化模型的性能或方法的优劣，从而选出最佳的模型或方法。不同生存预测模型的预测目标是不相同的，比如Cox比例风险模型的预测目标是风险比例，而首次命中时间模型的预测目标则是首次发生事件时间的概率分布，这导致了它们需要使用不同的评估指标来评价模型的性能。
 
-在生存分析中，最常用的预测模型评估指标是一致性指数 \citing{F1982Evaluating}（Concordance Index）。它主要用来衡量模型的风险区分度，其表达式为：
+在生存分析中，最常用的预测模型评估指标是一致性指数 \citing{F1982Evaluating}（Concordance Index）。它主要用来衡量模型的风险区分度，其表达式为
 \begin{equation}
 CI=\frac{\sum_{(i,j)\in \Omega} I(\hat{R}_i > \hat{R}_j)}{\mid \Omega \mid} \label{F13}
 \end{equation}
-其中$\hat{R}_i$表示预测模型对个体$i$发生事件的风险估计值，集合$\Omega=\{(i,j)\mid T_i<T_j,\delta_i=1\}$，$I(\cdot)$为示性函数。由一致性指数的表达式我们可以看出，对样本中的两个个体，当发生事件时间更早的个体所对应的模型风险估计值更高时，一致性指数越大，也意味着预测模型的性能越好。对于一类预测风险比例的生存预测模型，$\hat{R}_i$表示模型对个体$i$的风险比例估计值；而对一类预测首次发生事件时间的概率分布的生存预测模型，在集合$\Omega$中的每个元组$(i,j)$，$\hat{R}_i=\sum_{t<T_i} \hat{y}_t^i$ 表示模型估计个体$i$在$T_i$或$T_i$之前发生事件的概率，$\hat{R}_j=\sum_{t<T_i} \hat{y}_t^j$ 表示模型估计个体$j$在$T_i$或$T_i$之前发生事件的概率，此时一致性指数又被称为td-CI \citing{Antolini2005td}（time-dependent Concordance Index），其表达式为：
+其中$\hat{R}_i$表示预测模型对个体$i$发生事件的风险估计值，集合$\Omega=\{(i,j)\mid T_i<T_j,\delta_i=1\}$，$I(\cdot)$为示性函数。由一致性指数的表达式我们可以看出，对样本中的两个个体，当发生事件时间更早的个体所对应的模型风险估计值更高时，一致性指数越大，也意味着预测模型的性能越好。对于一类预测风险比例的生存预测模型，$\hat{R}_i$表示模型对个体$i$的风险比例估计值；而对一类预测首次发生事件时间的概率分布的生存预测模型，在集合$\Omega$中的每个元组$(i,j)$，$\hat{R}_i=\sum_{t<T_i} \hat{y}_t^i$ 表示模型估计个体$i$在$T_i$或$T_i$之前发生事件的概率，$\hat{R}_j=\sum_{t<T_i} \hat{y}_t^j$ 表示模型估计个体$j$在$T_i$或$T_i$之前发生事件的概率，此时一致性指数又被称为td-CI \citing{Antolini2005td}（time-dependent Concordance Index），其表达式为
 \begin{equation}
 tdCI=\frac{\sum_{(i,j)\in \Omega} I(\sum_{t<T_i} \hat{y}_t^i > \sum_{t<T_i} \hat{y}_t^j)}{\mid \Omega \mid} \label{F14}
 \end{equation}

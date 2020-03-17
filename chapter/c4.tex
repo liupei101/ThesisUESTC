@@ -18,11 +18,11 @@ BecCox生存分析方法主要针对一类比例风险模型的目标函数进�
 
 \subsection{目标函数}
 
-对于存在多数Ties的生存数据，Kalbfleisch和Prentice \citing{Kalbfleisch1986The} 认为处理Ties最自然的方式是对同一时刻发生事件的所有个体考虑其所有可能发生事件的次序，他们给出了精确的偏似然函数形式如下：
+对于存在多数Ties的生存数据，Kalbfleisch和Prentice \citing{Kalbfleisch1986The} 认为处理Ties最自然的方式是对同一时刻发生事件的所有个体考虑其所有可能发生事件的次序，他们给出了精确的偏似然函数形式为
 \begin{equation}
 \mathcal{L}_{kp} = \prod_{t\in D} \frac{e^{\sum_{j\in q(t)} \hat{y}_j}}{\sum_{P\in Q_t} \prod_{l=1}^{C_t} [\sum_{j \in R(t)-\{p_1,\cdots ,p_{l-1}\}} e^{\hat{y}_j}]}
 \end{equation}
-其中$Q_t$表示在$t$时刻观测到$C_t$个发生事件的患者的$C_t!$个排列的集合，$P=\{p_1,p_2,\cdots ,p_{C_t}\}$为$Q_t$中的一个元素。从$\mathcal{L}_{kp}$的表达式可以看出，当$C_t$较大时，优化精确的似然估计函数需要巨大的时间消耗。Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}（如式 \eqref{F6}所示）不再考虑同一时刻发生事件的次序，而是直接累加在$t$时刻处于观测期的所有个体（集合$R(t)$内的所有个体）的风险比例。而Efron近似的偏似然估计函数 \citing{Bradley1977The}也没有考虑同一时刻发生事件的次序，但是考虑了减低在$t$时刻发生事件的个体的风险比例的权值，其表达式如下：
+其中$Q_t$表示在$t$时刻观测到$C_t$个发生事件的患者的$C_t!$个排列的集合，$P=\{p_1,p_2,\cdots ,p_{C_t}\}$为$Q_t$中的一个元素。从$\mathcal{L}_{kp}$的表达式可以看出，当$C_t$较大时，优化精确的似然估计函数需要巨大的时间消耗。Breslow近似的偏似然估计函数 \citing{Breslow1974Covariance}（如式 \eqref{F6}所示）不再考虑同一时刻发生事件的次序，而是直接累加在$t$时刻处于观测期的所有个体（集合$R(t)$内的所有个体）的风险比例。而Efron近似的偏似然估计函数 \citing{Bradley1977The}也没有考虑同一时刻发生事件的次序，但是考虑了减低在$t$时刻发生事件的个体的风险比例的权值，其表达式为
 \begin{equation}
 \mathcal{L}_{e} = \prod_{t\in D} \frac{e^{\sum_{j\in q(t)} \hat{y}_j}}{\prod_{l=1}^{C_t} \left[\sum_{j \in R(t)} e^{\hat{y}_j} - \frac{l-1}{C_t} \sum_{j \in q(t)} e^{\hat{y}_j} \right]}
 \end{equation}
@@ -33,15 +33,15 @@ BecCox模型优化的目标函数同HitBoost模型类似，分为以下两个部
 	\item $L_1$，Efron近似的偏似然估计函数的负对数；
 	\item $L_2$，凸函数近似的一致性指数，作为损失函数的一部分用于调整风险排序。
 \end{enumerate}
-所以，最终BecCox方法需要最小化的目标函数是：
+所以，最终BecCox方法需要最小化的目标函数是
 \begin{equation}
 L = \theta \cdot L_1 + (1- \theta) \cdot L_2
 \end{equation}
-其中$\theta \in \mathbb{R}$且满足$0 \le \theta \le 1$，是模型的超参数之一。目标函数中的$L_1$项通过对$\mathcal{L}_e$取负对数得到：
+其中$\theta \in \mathbb{R}$且满足$0 \le \theta \le 1$，是模型的超参数之一。目标函数中的$L_1$项通过对$\mathcal{L}_e$取负对数得到
 \begin{equation}
 L_1 = -\ln\mathcal{L}_e = \sum_{t\in D} \left\{ \sum_{j\in q(t)} [\ln(SR(t)-w_j\cdot SD(t))-\hat{y}_j] \right\}
 \end{equation}
-其中$SR(t)=\sum_{j\in R(t)} e^{\hat{y}_j}$ 表示在$t$时刻处于观察期的所有个体风险比例之和；$SD(t)=\sum_{j\in q(t)} e^{\hat{y}_j}$表示在$t$时刻所有死亡个体风险比例之和；$w_j=(l-1)/C_t, l=1,\cdots,C_t$，表示$t$时刻发生事件个体集合$q(t)$中每个元素的权值。目标函数中的$L_2$项和HitBoost方法相同，只是这里直接使用模型输出值$\hat{y}_i$代替个体$i$的预测风险：
+其中$SR(t)=\sum_{j\in R(t)} e^{\hat{y}_j}$ 表示在$t$时刻处于观察期的所有个体风险比例之和；$SD(t)=\sum_{j\in q(t)} e^{\hat{y}_j}$表示在$t$时刻所有死亡个体风险比例之和；$w_j=(l-1)/C_t, l=1,\cdots,C_t$，表示$t$时刻发生事件个体集合$q(t)$中每个元素的权值。目标函数中的$L_2$项和HitBoost方法相同，只是这里直接使用模型输出值$\hat{y}_i$代替个体$i$的预测风险，即
 \begin{equation}
 L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{y}_i, \hat{y}_j)}{\sum_{(i,j)\in \Omega} W_{i,j}}
 \end{equation}
@@ -50,11 +50,11 @@ L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{y}_i, \hat{y}_j)}{\sum
 \subsection{梯度计算}
 
 借助灵活且易拓展的梯度提升树框架XGBoost，我们实现了提出的BecCox生存分析方法。这里，我们以定理的形式直接给出梯度推导的结果。定理的证明将在后文附录A中给出。
-    
+
 为了方便推导目标函数$L_1$项的一阶梯度和二阶梯度，我们先给出定义\ref{def:1}和\ref{def:2}，然后给出定理\ref{thm:2.1}和\ref{thm:2.2}。
 
 \begin{definition}\label{def:1}
-令$\zeta(t)$，$\eta(t)$表示两个关于时间$t$的函数：\[
+令$\zeta(t)$，$\eta(t)$表示两个关于时间$t$的函数，即\[
 \begin{split}
 \zeta(t) =& \sum_{j\in q(t)} 1/[SR(t) - w_j\cdot SD(t)] \\
 \eta(t)  =& \sum_{j\in q(t)} w_j/[SR(t) - w_j\cdot SD(t)]
@@ -63,7 +63,7 @@ L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{y}_i, \hat{y}_j)}{\sum
 \end{definition}
 
 \begin{definition}\label{def:2}
-令$\nu(t)$，$\pi(t)$表示两个关于时间$t$的函数：\[
+令$\nu(t)$，$\pi(t)$表示两个关于时间$t$的函数，即\[
 \begin{split}
 \nu(t) =& \sum_{j\in q(t)} 1/[SR(t) - w_j\cdot SD(t)]^2 \\
 \pi(t)  =& \sum_{j\in q(t)} [1-(1-w_j)^2]/[SR(t) - w_j\cdot SD(t)]^2
