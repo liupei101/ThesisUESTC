@@ -3,15 +3,15 @@
 
 \chapter{生存分析优化方法源代码}
 
-基于HitBoost和BecCox的模型框架、自定义目标函数、目标函数梯度定理，我们在可拓展的XGBoost梯度提升树框架下，根据模型框架的不同类型分别实现了我们提出的生存分析优化方法。源代码参考：
+基于本文所述的HitBoost和BecCox模型框架、自定义目标函数、目标函数梯度定理，我们在可拓展的XGBoost梯度提升树框架下，根据模型框架的不同类型分别实现了提出的生存分析优化方法。源代码可以参考：
 \begin{itemize}
   \item HitBoost：\emph{https://github.com/liupei101/libsurv/tree/master/libsurv/hitboost}；
   \item BecCox：\emph{https://github.com/liupei101/libsurv/tree/master/libsurv/ciboost}。
 \end{itemize}
-源代码中核心的目标函数梯度计算部分，主要基于numpy库，使用了向量化技巧来加速目标函数梯度计算的过程，从而大幅度缩短模型拟合的时间。
+源代码中核心的目标函数梯度计算部分，主要基于numpy库，使用了向量化技巧来加速目标函数梯度的计算，从而大幅度缩短模型训练的时间。
 
-源代码中，我们实现了常用的生存预测模型建立、评估、分析流程。首先，在生存数据读取方面，我们在源代码中提供了统一的生存数据构建函数，方便各个生存预测模型读取训练数据，同时提供了读取公开数据集WHAS，METABRIC和模拟数据集的接口。其次，在模型训练方面，我们提供了统一的模型训练接口，还实现了查看模型学习曲线的功能。最后，在模型评估方面，一致性指数计算函数在各个模型类的方法中均有实现。同时，项目\emph{https://github.com/liupei101/libsurv}提供：
+源代码提供的libsurv包中，我们实现了常用的生存预测模型建立、评估、分析流程。首先，在生存数据读取方面，我们提供了统一的生存数据构建函数，方便各个生存预测模型读取训练数据。同时，包还提供了读取公开数据集WHAS、METABRIC和模拟数据集的接口。其次，在模型训练方面，我们提供了统一的模型训练接口，实现了查看模型学习曲线的功能。最后，在模型评估方面，一致性指数计算函数在各个模型类的方法中均有实现。此外，libsurv包\emph{https://github.com/liupei101/libsurv}提供：
 \begin{itemize}
   \item 贝叶斯超参数搜索工具，用于搜索模型的最佳超参数；
-  \item 方法使用示例，介绍了HitBoost和BecCox模型从建立到评估的整个流程及代码实现。
+  \item 方法使用示例，展示HitBoost和BecCox模型从建立到评估的整体流程。
 \end{itemize}

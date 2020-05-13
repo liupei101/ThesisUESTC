@@ -1,19 +1,19 @@
 
 \chapter{HitBoost生存分析方法}
 
-针对现有生存分析方法依赖先验假设或解释性不足的问题，我们在传统的FHT首次命中时间模型的基础上研究了基于梯度提升树的优化方法，提出一种新的生存分析方法：HitBoost。该方法不再依赖任何先验假设，使用多输出的梯度提升树直接预测首次命中时间的概率分布，同时保证了一定的模型解释性。考虑到XGBoost梯度提升树算法在模型表征能力以及避免过拟合等方面的优势，我们在该框架的基础上研究并实现了HitBoost生存分析方法。下面将首先从模型框架和优化方法两个方面介绍提出的HitBoost生存分析方法，然后介绍四个公开的生存数据集的基本情况，最后给出HitBoost方法在公开数据集上的实验结果。
+针对现有生存分析方法依赖先验假设或解释性不足的问题，我们在传统的FHT首次命中时间模型的基础上研究了基于梯度提升树的优化方法，提出一种新的生存分析方法：HitBoost。该方法不再依赖任何先验假设，使用多输出的梯度提升树直接预测首次命中时间的概率分布，同时保证了一定的模型解释性。考虑到XGBoost梯度提升树算法在模型表征能力以及避免过拟合等方面的优势 \citing{chen2016xgboost}，我们在该框架的基础上研究并实现了HitBoost生存分析方法。下面将首先从模型框架和优化方法两个方面介绍提出的HitBoost生存分析方法，然后介绍四个公开的生存数据集的基本情况，最后给出HitBoost方法在公开数据集上的实验结果。
 
 本章内容参见文献：Hitboost: Survival analysis via a multi­ output gradient boosting decision tree method[J]. IEEE Access, 2019, 7: 56785-­56795.
 
 \section{模型框架}
 
-为了不再依赖个体风险函数的任何假设，直接学习协变量与首次发生事件时间概率分布之间潜在的关系，同时保证模型的特征解释性，我们提出了一种基于多输出的梯度提升树的生存分析方法——HitBoost。如图\ref{pic01}所示，HitBoost模型是一个多输出的梯度提升树模型，它学习并且直接估计在给定协变量$x^*$的条件下，在$t^*$时刻首次发生事件的概率$P(t = t^*,\delta = 1\mid x = x^* )$。HitBoost模型的输入为协变量（或生存数据），每一个输出由一个单独的梯度提升树模型给出。作为一个前向加法模型，每个单独的梯度提升树模型由多棵决策树组成。多个独立的梯度提升树模型经过一个softmax层转化为最终的输出预测值。模型预测值$\hat{y}$是一个向量，写作
+为了不再依赖个体风险函数的任何假设，直接学习协变量与首次发生事件时间概率分布之间潜在的关系，同时保证模型的特征解释性，我们提出了一种基于多输出的梯度提升树的生存分析方法——HitBoost。如图\ref{pic01}所示，HitBoost模型是一个多输出的梯度提升树模型。它学习并且直接估计在给定协变量$x^*$的条件下，在$t^*$时刻首次发生事件的概率$P(t = t^*,\delta = 1\mid x = x^* )$。HitBoost模型的输入为协变量（或生存数据），每一个输出由一个单独的梯度提升树模型给出。作为一个前向加法模型，每个单独的梯度提升树模型由多棵决策树组成。多个独立的梯度提升树模型经过一个softmax层转化为最终的输出预测值。模型预测值$\hat{y}$是一个向量，写作
 \begin{equation}
-\hat{y}=\left[\hat{y}_1, \hat{y}_1, \dots, \hat{y}_{T_{max}}, \hat{y}_{T_{max}+1}\right] \label{F31}
+\hat{y}=\left[\hat{y}_1, \hat{y}_1, \dots, \hat{y}_{T_{max}}, \hat{y}_{T_{max}+1}\right]. \label{F31}
 \end{equation}
 其中$T_{max}$表示研究对象中最长的个体随访时间。给定某个个体协变量$x$，模型的一个输出$\hat{y}_t$表示该个体在$t$时刻发生事件的预测概率值$\hat{P}(t, \delta = 1 \mid x)$。因为$\hat{y}_{T_{max}+1}=1-\sum_{t=1}^{T_{max}} \hat{y}_t$，所以预测值$\hat{P}(T_{max}+1, \delta = 1 \mid x)$表示协变量为$x$的个体在整个研究过程中未观测到事件发生的概率。这里，我们定义个体$i$的累积事件函数CIF（Cumulative Incidence Function）来表示个体$i$在$t$时刻或$t$时刻之前发生事件的累积概率，其表达式为
 \begin{equation}
-\hat{F}(i, t) = P(\tau \le t, \delta = 1 \mid x_i) = \sum_{\tau \le t} \hat{y}_{\tau}^i \label{F32}
+\hat{F}(i, t) = P(\tau \le t, \delta = 1 \mid x_i) = \sum_{\tau \le t} \hat{y}_{\tau}^i. \label{F32}
 \end{equation}
 
 \begin{figure}[h]
@@ -22,42 +22,42 @@
 \label{pic01}
 \end{figure}
 
-当给定生存数据和特定的目标函数（见下节）后，多颗梯度提升树模型在每一轮迭代的过程中，通过梯度提升算法并行地学习协变量和风险函数之间的潜在关系。最后，经过拟合的HitBoost生存分析模型可以准确地预测首次发生事件时间的概率密度函数，或者经过转换得到风险函数和生存函数的估计值。从HitBoost模型的结构可以看出，它可以学习复杂的风险函数表达式，而不仅限于比例风险函数形式或某个固定形式的随机过程。而且，由于该方法基于多输出的梯度提升树，所以它可以充分利用相关的统计量，如节点分裂过程中用于寻找最佳分裂特征的高阶梯度值，去探索和感兴趣事件相关的重要特征，这也是HitBoost方法的优点之一。
+当给定生存数据和特定的目标函数（见下节）后，多颗梯度提升树模型在每一轮迭代的过程中，通过梯度提升算法并行地学习协变量和风险函数之间的潜在关系。最后，经过拟合的HitBoost生存分析模型可以准确地预测首次发生事件时间的概率密度函数，或者经过转换得到风险函数和生存函数的估计值。从HitBoost模型的结构可以看出，它可以学习复杂的风险函数表达式，而不仅限于比例风险函数形式或某个固定形式的随机过程。而且，因为该方法基于多输出的梯度提升树，所以它可以充分利用相关的统计量，如节点分裂过程中用于寻找最佳分裂特征的高阶梯度值，去寻找和感兴趣事件相关的重要特征。这也是HitBoost方法的优点之一。
 
 \section{优化算法}
 
 \subsection{目标函数}
 
-为了训练生存分析模型，我们需要定义特定的目标函数表达式。HitBoost生存分析方法需要优化的目标函数包括两个：
+为了训练生存分析模型，我们需要定义特定的目标函数表达式。HitBoost生存分析方法需要优化的目标函数包括两个，即
 \begin{enumerate}
     \item $L_1$，首次命中时间FHT模型中的极大似然估计函数，由公式\eqref{F8}给出的；
-    \item $L_2$，凸函数近似的一致性指数，它作为损失函数的一部分用于调整风险排序。
+    \item $L_2$，凸函数近似的一致性指数，作为损失函数的一部分用于调整风险排序。
 \end{enumerate}
 所以，最终HitBoost模型需要最小化的目标函数是
 \begin{equation}
-L=\theta \cdot L_1 + (1-\theta) \cdot L_2 \label{F33}
+L=\theta \cdot L_1 + (1-\theta) \cdot L_2. \label{F33}
 \end{equation}
 其中$\theta \in \mathbb{R}$且满足 $0 \le \theta \le 1$，是模型需要调整的超参数之一。
  
 参考表达式\eqref{F8}可知，需要极小化的HitBoost目标函数$L_1$项为
 \begin{equation}
-L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]
+L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right].
 \end{equation}
 对于个体$i$，$L_1$项保证了如果该个体在$T_i$时刻发生事件，则最大化其在$T_i$时刻首次发生事件的概率；否则，如果该个体在$T_i$时刻出现失访（未观测到时间发生），则最小化其在$T_i$时刻或$T_i$时刻之前首次发生事件的概率。
 
-在HitBoost目标函数$L_2$项中，一致性指数被当作了优化项。一般来说，一致性指数作为生存预测模型的评估指标，常常出现在模型性能评估中。它认为发生事件时间更早的个体所对应的模型风险估计值也应该更高。所以，我们在HitBoost目标函数中也应用了一致性指数中风险排序的思想。但是由于一致性指数不是一个凸函数，所以它无法被直接引入作为梯度提升树的优化目标。从文献\cite{Yan2004pre}得到启发，我们使用了凸函数
+在HitBoost目标函数$L_2$项中，一致性指数被当作了优化项。一般来说，一致性指数作为生存预测模型的评估指标，常常出现在模型性能评估中。它认为发生事件时间更早的个体所对应的模型风险估计值也应该更高 \citing{F1982Evaluating}。所以，我们在HitBoost目标函数中也应用了一致性指数中风险排序的思想。但是一致性指数不是一个凸函数，所以它无法被直接引入作为梯度提升树的优化目标。从文献\cite{Yan2004pre}得到启发，我们使用了凸函数
 \begin{equation}
 \phi(x,y)=
 \begin{cases}
 {[-(x-y-\gamma)]}^n & \text{if } x-y < \gamma,\\
-0 & \text{if } x-y \ge \gamma.
+0 & \text{if } x-y \ge \gamma
 \end{cases}
 \end{equation}
-去近似一致性指数中的指示函数，而不是熟悉的sigmoid函数。凸函数$\phi(\cdot)$中，模型超参数$\gamma$和$n$分别满足$0<\gamma \le 1$和$n>1$。对一致性指数进行调整，并且使用$\hat{F}(i, T_i)$代替个体$i$的预测风险后，可以得到
+去近似一致性指数中的指示函数，而不是常见的sigmoid函数。凸函数$\phi(\cdot)$中，模型超参数$\gamma$和$n$分别满足$0<\gamma \le 1$和$n>1$。对一致性指数进行调整，并且使用$\hat{F}(i, T_i)$代替个体$i$的预测风险后，可以得到
 \begin{equation}
-L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{F}(i, T_i), \hat{F}(j, T_i))}{\sum_{(i,j)\in \Omega} W_{i,j}}
+L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{F}(i, T_i), \hat{F}(j, T_i))}{\sum_{(i,j)\in \Omega} W_{i,j}}.
 \end{equation}
-其中，分母$W_{i,j}=-\left( \hat{F}(i, T_i) - \hat{F}(j, T_i) \right)$为一个归一化系数。它是集合$\Omega$中每个元组$(i,j)$的权重系数，表示个体$i$和$j$之间的风险差值。使用凸函数$\phi(\cdot)$近似后的一致性指数$L_2$的作用主要表现在以下两个方面：
+其中，分母$W_{i,j}=-\left( \hat{F}(i, T_i) - \hat{F}(j, T_i) \right)$为一个归一化系数。它是集合$\Omega$中每个元组$(i,j)$的权重系数，表示个体$i$和$j$之间的风险差值。使用凸函数$\phi(\cdot)$近似后的一致性指数$L_2$的作用主要表现在两个方面：
 \begin{enumerate}
     \item 如果个体$i$比个体$j$更早发生事件，也就是说个体$i$有更高的事件发生风险，最小化$L_2$等于加大个体$i$和$j$之间的风险差值，直到这个差值大于或等于$\gamma$；
     \item 如果集合$\Omega$中某个元组$(i,j)$的风险差异大于或等于$\gamma$，那么这个元组将不会对目标函数$L_2$的大小产生任何影响。
@@ -66,7 +66,7 @@ L_2 = \frac{\sum_{(i,j)\in \Omega} W_{i,j}\cdot \phi(\hat{F}(i, T_i), \hat{F}(j,
 
 \subsection{梯度计算}
 
-在易拓展，灵活的梯度提升树框架XGBoost的帮助下，我们实现了提出的HitBoost生存分析方法。不同于一般的梯度提升树模型，XGBoost需要推导目标函数关于模型预测值的一阶梯度和二阶梯度。这里，我们首先以定理的形式给出梯度推导的结果，然后给出定理证明。
+在易拓展、灵活的梯度提升树框架XGBoost的帮助下，我们实现了提出的HitBoost生存分析方法。不同于一般的梯度提升树模型，XGBoost需要推导目标函数关于模型预测值的一阶梯度和二阶梯度。这里，我们首先以定理的形式给出梯度推导的结果，然后给出定理证明。
 
 \begin{theorem}\label{thm:1.1}
 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_1$关于模型预测值$\hat{y}_t^k$的\textbf{一阶梯度}为$$
@@ -79,9 +79,9 @@ $$
 \end{theorem}
 
 \begin{proof}
-已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们推导目标函数$L_1$项的一阶梯度。
+已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right],$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们推导目标函数$L_1$项的一阶梯度。
 
-如果$\delta_k = 1$，那么$L_1$中和个体$k$有关的部分为$-\ln(\hat{y}_{T_k}^k)$，所以$L_1$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 1} = I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，那么$L_1$中和个体$k$有关的部分为$-\ln(1-\sum_{t\le T_k}\hat{y}_t^k)$，对其求导数，我们可以得到相应的梯度表达式$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 0} = I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)}$$ 其中CIF累积事件发生函数$\hat{F}$用来简化表达式。所以，综上所证，我们有如下$L_1$关于$\hat{y}_t^k$的\textbf{一阶梯度}$$
+如果$\delta_k = 1$，那么$L_1$中和个体$k$有关的部分为$-\ln(\hat{y}_{T_k}^k)$，所以$L_1$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 1} = I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k}.$$ 否则，如果$\delta_k = 0$，那么$L_1$中和个体$k$有关的部分为$-\ln(1-\sum_{t\le T_k}\hat{y}_t^k)$，对其求导数，我们可以得到相应的梯度表达式$$\frac{\partial L_1}{\partial \hat{y}_t^k} \mid_{\delta_k = 0} = I(t\le T_k)\cdot \frac{1}{1-\hat{F}(k, T_k)}.$$ 其中CIF累积事件发生函数$\hat{F}$用来简化表达式。所以，综上所证，我们有如下$L_1$关于$\hat{y}_t^k$的\textbf{一阶梯度}$$
 \frac{\partial L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
   I(t=T_k)\cdot \frac{-1}{\hat{y}_t^k} & \text{if } \delta_k = 1,\\
@@ -101,7 +101,7 @@ $$
 \end{theorem}
 
 \begin{proof}
-已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们推导目标函数$L_1$项的二阶梯度。不需要太多复杂的计算和推导，我们可以在定理\ref{thm:1.1}的基础上，直接对$L_1$的一阶梯度表达式求导即可得到$L_1$的\textbf{二阶梯度}，即定理\ref{thm:1.2}$$
+已知$$L_1 = -\sum_{i=1}^{n} \left[ I(\delta_i=1)\cdot \ln(\hat{y}_{T_i}^i) + I(\delta_i=0)\cdot \ln(1-\sum_{t\le T_i}\hat{y}_t^i) \right],$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们推导目标函数$L_1$项的二阶梯度。不需要太多复杂的计算和推导，我们可以在定理\ref{thm:1.1}的基础上，直接对$L_1$的一阶梯度表达式求导即可得到$L_1$的\textbf{二阶梯度}，即定理\ref{thm:1.2}$$
 \frac{\partial^2 L_1}{\partial \hat{y}_t^k}=
 \begin{cases}
   I(t=T_k)\cdot \frac{1}{{(\hat{y}_t^k)}^2} & \text{if } \delta_k = 1,\\
@@ -120,8 +120,8 @@ $$
 分别表示个体$k$的发生事件风险大于个体$i$和小于个体$i$的元组集合。设$L_2$的分母和分子分别为$\alpha$和$\beta$，即
 \begin{equation}
 \begin{split}
-\alpha &= \sum_{(i,j)\in \Omega} W_{i,j}\\
-\beta &= \sum_{(i,j)\in \Omega} W_{i,j} \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right]
+\alpha &= \sum_{(i,j)\in \Omega} W_{i,j},\\
+\beta &= \sum_{(i,j)\in \Omega} W_{i,j} \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right].
 \end{split}
 \end{equation}
 我们有如下定理。
@@ -141,30 +141,30 @@ $$ 且$L_2$项分子$\beta$关于模型预测值$\hat{y}_t^k$的\textbf{一阶�
 \end{cases}
 $$ 其中\[
 \begin{split}
-\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} &= I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} {I(-W_{k,i}<\gamma)\cdot (W_{k,i}+\gamma)^{n-1}\cdot [-(n+1)\cdot W_{k,i}-\gamma]} \\
-\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} &= \sum\limits_{(i,k)\in \Omega_2} {I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot (W_{i,k}+\gamma)^{n-1}\cdot [(n+1)\cdot W_{i,k}+\gamma]}
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} &= I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} {I(-W_{k,i}<\gamma)\cdot (W_{k,i}+\gamma)^{n-1}\cdot [-(n+1)\cdot W_{k,i}-\gamma]}, \\
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} &= \sum\limits_{(i,k)\in \Omega_2} {I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot (W_{i,k}+\gamma)^{n-1}\cdot [(n+1)\cdot W_{i,k}+\gamma]}.
 \end{split}
 \]
 \end{theorem}
 
 \begin{proof}
-已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的一阶梯度。
+已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right],$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的一阶梯度。
 
 为了方便推导$L_2$的一阶梯度，我们分别考虑其分子$\beta$和分母$\alpha$。
 
-首先，对于$L_2$项的分母$\alpha$。我们考虑集合$\Omega$，从中找到和个体$k$有关的元素。遍历集合$\Omega$的所有元素，和个体$k$相关的元素可以被归纳到两个不相交的子集$$\Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}$$ 和 $$\Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}$$ 从集合意义上来说，$\Omega_1$表示实际风险小于$k$的个体和$k$组成的元组的集合，$\Omega_2$表示实际风险大于$k$的个体和$k$组成的元组的集合。
+首先，对于$L_2$项的分母$\alpha$。我们考虑集合$\Omega$，从中找到和个体$k$有关的元素。遍历集合$\Omega$的所有元素，与个体$k$相关的元素可以被归纳到两个不相交的子集$$\Omega_1=\{(k,i) \mid \delta_k=1,T_k < T_i\}$$ 和 $$\Omega_2=\{(i,k) \mid \delta_i=1,T_i < T_k\}$$中。从集合意义上来说，$\Omega_1$表示实际风险小于$k$的个体和$k$组成的元组的集合，$\Omega_2$表示实际风险大于$k$的个体和$k$组成的元组的集合。
 
-如果$\delta_k = 1$，那么$\alpha$中和个体$k$有关的部分可以展开为$$\alpha \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} -\left[ \hat{F}(k, T_k) - \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} -\left[ \hat{F}(i, T_i) - \hat{F}(k, T_i) \right] $$ 我们首先考虑集合$\Omega_1$，定义$\alpha_1$为\[
+如果$\delta_k = 1$，那么$\alpha$中和个体$k$有关的部分可以展开为$$\alpha \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} -\left[ \hat{F}(k, T_k) - \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} -\left[ \hat{F}(i, T_i) - \hat{F}(k, T_i) \right]. $$ 我们首先考虑集合$\Omega_1$，定义$\alpha_1$为\[
 \begin{split}
 \alpha_1 &= \sum_{(k,i)\in \Omega_1} -\left[ \hat{F}(k, T_k) - \hat{F}(i, T_k) \right] \\
-         &= \sum_{(k,i)\in \Omega_1} - ( \sum_{\tau \le T_k} \hat{y}_{\tau}^k - \sum_{\tau \le T_k} \hat{y}_{\tau}^i )
+         &= \sum_{(k,i)\in \Omega_1} - ( \sum_{\tau \le T_k} \hat{y}_{\tau}^k - \sum_{\tau \le T_k} \hat{y}_{\tau}^i ).
 \end{split}
-\] 所以，$\alpha_1$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_1}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}$$ 同理，考虑集合$\Omega_2$，定义$\alpha_2$为\[
+\] 所以，$\alpha_1$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_1}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}.$$ 同理，考虑集合$\Omega_2$，定义$\alpha_2$为\[
 \begin{split}
 \alpha_2 &= \sum_{(i,k)\in \Omega_2} -\left[ \hat{F}(i, T_i) - \hat{F}(k, T_i) \right] \\
-         &= \sum_{(i,k)\in \Omega_2} - ( \sum_{\tau \le T_i} \hat{y}_{\tau}^i - \sum_{\tau \le T_i} \hat{y}_{\tau}^k )
+         &= \sum_{(i,k)\in \Omega_2} - ( \sum_{\tau \le T_i} \hat{y}_{\tau}^i - \sum_{\tau \le T_i} \hat{y}_{\tau}^k ).
 \end{split}
-\] 所以，$\alpha_2$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_2}{\partial \hat{y}_t^k} = \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i)$$ 故我们可以总结$\alpha$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial \alpha}{\partial \hat{y}_t^k} = \frac{\partial \alpha_1}{\partial \hat{y}_t^k} + \frac{\partial \alpha_2}{\partial \hat{y}_t^k}$$ 否则，如果$\delta_k = 0$，则和个体$k$有关的子集只剩$\Omega_2$。所以，我们可以证明得到定理\ref{thm:1.3}给出的\textbf{一阶梯度}表达式为$$
+\] 所以，$\alpha_2$关于$\hat{y}_t^k$的一阶梯度是$$\frac{\partial \alpha_2}{\partial \hat{y}_t^k} = \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i).$$ 故我们可以总结$\alpha$关于$\hat{y}_t^k$的一阶梯度为$$\frac{\partial \alpha}{\partial \hat{y}_t^k} = \frac{\partial \alpha_1}{\partial \hat{y}_t^k} + \frac{\partial \alpha_2}{\partial \hat{y}_t^k}.$$ 否则，如果$\delta_k = 0$，则和个体$k$有关的子集只剩$\Omega_2$。所以，我们可以证明得到定理\ref{thm:1.3}给出的\textbf{一阶梯度}表达式为$$
 \frac{\partial \alpha}{\partial \hat{y}_t^k}=\alpha^{'}=
 \begin{cases}
 I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)} + \sum\limits_{i: \delta_i=1,T_i<T_k} I(t\le T_i) & \text{if } \delta_k = 1,\\
@@ -172,12 +172,12 @@ I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)} + \sum\limits_{i: \delta_i=1,T_i
 \end{cases}
 $$
 
-对于$L_2$项的分子$\beta$，已知$$\beta = \sum_{(i,j)\in \Omega} -\left[\hat{F}(i, T_i) - \hat{F}(j, T_i)\right] \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right]$$ 对于个体$k$，现在我们需要推导$\beta$关于$\hat{y}_t^k$的梯度。和分母$\alpha$的表达式不同，分子$\beta$中含有函数$\phi(\cdot)$。同样地，我们需要考虑集合$\Omega$中和个体$k$相关的元素，将其分为两个不相交的子集$\Omega_1$和$\Omega_2$。
+对于$L_2$项的分子$\beta$，已知$$\beta = \sum_{(i,j)\in \Omega} -\left[\hat{F}(i, T_i) - \hat{F}(j, T_i)\right] \cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(j, T_i) \right],$$ 对于个体$k$，现在我们需要推导$\beta$关于$\hat{y}_t^k$的梯度。和分母$\alpha$的表达式不同，分子$\beta$中含有函数$\phi(\cdot)$。同样地，我们需要考虑集合$\Omega$中和个体$k$相关的元素，将其分为两个不相交的子集$\Omega_1$和$\Omega_2$。
 
-如果$\delta_k = 1$，那么$\beta$中和个体$k$有关的部分可以展开为$$\beta \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} W_{i,k}\cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(k, T_i) \right] $$ 首先考虑上式加号左边的部分，定义$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right]$$ 由于当$\hat{F}(k, T_k) - \hat{F}(i, T_k) \ge \gamma$时，函数$\phi(\cdot)=0$，所以我们可以简化$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} I(-W_{k,i} < \gamma) \cdot W_{k,i}\cdot [W_{k,i} + \gamma]^n $$ 从上面的对$\alpha$梯度的推导我们已经得到$W_{k,i}$关于$\hat{y}_t^k$的梯度为$$\frac{\partial W_{k,i}}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}$$ 所以我们借助链式法则，可以推导得到$\beta_1$关于$\hat{y}_t^k$的一阶梯度如下$$
-\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} = I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} {I(-W_{k,i}<\gamma)\cdot (W_{k,i}+\gamma)^{n-1}\cdot [-(n+1)\cdot W_{k,i}-\gamma]}
+如果$\delta_k = 1$，那么$\beta$中和个体$k$有关的部分可以展开为$$\beta \mid_{\delta_k=1}=\sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right] + \sum_{(i,k)\in \Omega_2} W_{i,k}\cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(k, T_i) \right]. $$ 首先考虑上式加号左边的部分，定义$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} W_{k,i}\cdot \phi\left[ \hat{F}(k, T_k), \hat{F}(i, T_k) \right].$$ 当$\hat{F}(k, T_k) - \hat{F}(i, T_k) \ge \gamma$时，函数$\phi(\cdot)=0$，所以我们可以简化$\beta_1$为$$\beta_1 = \sum_{(k,i)\in \Omega_1} I(-W_{k,i} < \gamma) \cdot W_{k,i}\cdot [W_{k,i} + \gamma]^n. $$ 从上面的对$\alpha$梯度的推导我们已经得到$W_{k,i}$关于$\hat{y}_t^k$的梯度为$$\frac{\partial W_{k,i}}{\partial \hat{y}_t^k} = I(t\le T_k)\cdot {\sum\limits_{i: T_i>T_k}(-1)}.$$ 所以我们借助链式法则，可以推导得到$\beta_1$关于$\hat{y}_t^k$的一阶梯度如下$$
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} = I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} {I(-W_{k,i}<\gamma)\cdot (W_{k,i}+\gamma)^{n-1}\cdot [-(n+1)\cdot W_{k,i}-\gamma]}.
 $$ 同理，对于$\beta$展开式的右边部分$\beta_2=\sum_{(i,k)\in \Omega_2} W_{i,k}\cdot \phi\left[ \hat{F}(i, T_i), \hat{F}(k, T_i) \right]$，我们可以得到其一阶梯度为$$
-\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} = \sum\limits_{(i,k)\in \Omega_2} {I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot (W_{i,k}+\gamma)^{n-1}\cdot [(n+1)\cdot W_{i,k}+\gamma]}
+\frac{\partial \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} = \sum\limits_{(i,k)\in \Omega_2} {I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot (W_{i,k}+\gamma)^{n-1}\cdot [(n+1)\cdot W_{i,k}+\gamma]}.
 $$ 否则，如果$\delta_k = 0$，则$\beta$的表达式中和个体$k$有关的子集只剩$\Omega_2$，所以此时$\beta$关于$\hat{y}_t^k$的一阶梯度和$\beta_2$一样。最终，我们可以得到定理\ref{thm:1.3}给出的\textbf{一阶梯度}表达式，即$$
 \frac{\partial \beta}{\partial \hat{y}_t^k}=\beta^{'}=
 \begin{cases}
@@ -189,7 +189,7 @@ $$
 
 \begin{theorem}\label{thm:1.4}
 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，HitBoost目标函数$L_2$项分母$\alpha$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
-\frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0
+\frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0,
 $$ 且$L_2$项分子$\beta$关于模型预测值$\hat{y}_t^k$的\textbf{二阶梯度}为$$
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k}=\beta^{''}=
 \begin{cases}
@@ -199,28 +199,28 @@ $$ 且$L_2$项分子$\beta$关于模型预测值$\hat{y}_t^k$的\textbf{二阶�
 $$ 其中\[
 \begin{split}
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} =& I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} I(-W_{k,i}<\gamma)\cdot \\
-  & \left\{(n+1)\cdot (W_{k,i}+\gamma)^{n-1} + (n-1)\cdot (W_{k,i}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{k,i}+\gamma]\right\} \\
+  & \left\{(n+1)\cdot (W_{k,i}+\gamma)^{n-1} + (n-1)\cdot (W_{k,i}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{k,i}+\gamma]\right\}, \\
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} =& \sum\limits_{(i,k)\in \Omega_2} I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot \\
-  & \left\{(n+1)\cdot (W_{i,k}+\gamma)^{n-1} + (n-1)\cdot (W_{i,k}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{i,k}+\gamma]\right\}
+  & \left\{(n+1)\cdot (W_{i,k}+\gamma)^{n-1} + (n-1)\cdot (W_{i,k}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{i,k}+\gamma]\right\}.
 \end{split}
 \]
 \end{theorem}
 
 \begin{proof}
-已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right]$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的二阶梯度。
+已知$$\alpha = \sum_{(i,j)\in \Omega} W_{i,j}$$ 和 $$W_{i,j} = -\left[ \hat{F}(i, T_i) - \hat{F}(j, T_i) \right],$$ 对观测时间和观测事件状态分别为$T_k$和$\delta_k$的个体$k$，我们需要推导$\alpha$关于$\hat{y}_t^k$ 的二阶梯度。
 
 为了方便推导$L_2$的二阶梯度，我们分别考虑其分子$\beta$和分母$\alpha$。
 
-首先对于$L_2$项的分母$\alpha$，由于其一阶梯度表达式中没有出现$\hat{y}_t^k$，所以$\alpha$关于$\hat{y}_t^k$的\textbf{二阶梯度}为$$
-\frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0
+首先对于$L_2$项的分母$\alpha$，因为其一阶梯度表达式中没有出现$\hat{y}_t^k$，所以$\alpha$关于$\hat{y}_t^k$的\textbf{二阶梯度}为$$
+\frac{\partial^2 \alpha}{\partial \hat{y}_t^k}=\alpha^{''}=0.
 $$
 
-然后对于$L_2$项的分子$\beta$，基于定理\ref{thm:1.3}证明中的一阶梯度表达式$\beta^{'}$，我们可以通过对$\beta^{'}$求导来得到$\beta$的二阶梯度。在推导二阶梯度的过程中，由于仅涉及梯度求解的链式法则，所以我们直接给出对$\beta^{'}$求导的结果，即定理\ref{thm:1.4}\[
+然后对于$L_2$项的分子$\beta$，基于定理\ref{thm:1.3}证明中的一阶梯度表达式$\beta^{'}$，我们可以通过对$\beta^{'}$求导来得到$\beta$的二阶梯度。在推导二阶梯度的过程中，因为仅涉及梯度求解的链式法则，所以我们直接给出对$\beta^{'}$求导的结果，即定理\ref{thm:1.4}\[
 \begin{split}
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_1} =& I(t\le T_k)\cdot \sum\limits_{(k,i)\in \Omega_1} I(-W_{k,i}<\gamma)\cdot \\
-  & \left\{(n+1)\cdot (W_{k,i}+\gamma)^{n-1} + (n-1)\cdot (W_{k,i}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{k,i}+\gamma]\right\} \\
+  & \left\{(n+1)\cdot (W_{k,i}+\gamma)^{n-1} + (n-1)\cdot (W_{k,i}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{k,i}+\gamma]\right\}, \\
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k} \mid_{\Omega_2} =& \sum\limits_{(i,k)\in \Omega_2} I(t\le T_i)\cdot I(-W_{i,k}<\gamma)\cdot \\
-  & \left\{(n+1)\cdot (W_{i,k}+\gamma)^{n-1} + (n-1)\cdot (W_{i,k}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{i,k}+\gamma]\right\}
+  & \left\{(n+1)\cdot (W_{i,k}+\gamma)^{n-1} + (n-1)\cdot (W_{i,k}+\gamma)^{n-2}\cdot [(n+1)\cdot W_{i,k}+\gamma]\right\},
 \end{split}
 \] 且有$$
 \frac{\partial^2 \beta}{\partial \hat{y}_t^k}=\beta^{''}=
@@ -231,17 +231,17 @@ $$
 $$
 \end{proof}
 
-由定理\ref{thm:1.1}，\ref{thm:1.2}，\ref{thm:1.3}和\ref{thm:1.4}，以及
+由定理\ref{thm:1.1}、\ref{thm:1.2}、\ref{thm:1.3}、\ref{thm:1.4}，以及
 \begin{equation}
-L=\theta\cdot L_1 + (1-\theta)\cdot L_2= \theta\cdot L_1 + (1-\theta)\cdot \frac{\beta}{\alpha}
+L=\theta\cdot L_1 + (1-\theta)\cdot L_2= \theta\cdot L_1 + (1-\theta)\cdot \frac{\beta}{\alpha},
 \end{equation} 
 我们可以使用链式法则轻松推导出HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的一阶梯度
 \begin{equation}
-\frac{\partial L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \omega(\alpha, \beta)
+\frac{\partial L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \omega(\alpha, \beta).
 \end{equation}
 其中$\omega(\alpha, \beta)=\frac{\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'}}{\alpha^2}$。HitBoost目标函数$L$关于模型预测值$\hat{y}_t^k$的二阶梯度
 \begin{equation}
-\frac{\partial^2 L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial^2 L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \tau(\alpha, \beta)
+\frac{\partial^2 L}{\partial \hat{y}_t^k}=\theta\cdot \frac{\partial^2 L_1}{\partial \hat{y}_t^k} + (1-\theta)\cdot \tau(\alpha, \beta).
 \end{equation} 
 其中$\tau(\alpha, \beta)=\frac{\alpha\cdot (\beta^{''}\cdot \alpha - \beta\cdot \alpha^{''})-2\alpha^{'}\cdot (\beta^{'}\cdot \alpha - \beta\cdot \alpha^{'})}{\alpha^3}$。
 
@@ -249,7 +249,7 @@ L=\theta\cdot L_1 + (1-\theta)\cdot L_2= \theta\cdot L_1 + (1-\theta)\cdot \frac
 
 \section{实验数据集}
 
-在实验评估提出的生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在对收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件，样本量，数据特征数目，事件占比，观测时间最小值，观测时间中位数和观测时间最大值几个方面观察了数据，统计结果如表\ref{table01}所示。
+在实验评估提出的生存分析方法之前，我们首先介绍实验将会用到的四个公开生存数据集。四个公开生存数据集都来源于健康医疗领域，但它们所研究的感兴趣的事件不尽相同。在对收集数据进行预处理的过程中，我们统一以月份（30天）为观测时间的基本单位。为了了解生存数据集的基本情况，我们从研究事件、样本量、数据特征数目、事件占比、观测时间最小值、观测时间中位数、观测时间最大值方面观察了数据，统计结果如表\ref{table01}所示。
 
 \begin{table}[H]
 \caption{生存数据集的基本情况统计}
@@ -273,13 +273,13 @@ ROTT2 & 乳腺癌患者生存 & 2982 & 9 & 42.66\% & 2 & 87 & 232 \\
 \label{pic02}
 \end{figure}
 
-使用Kaplan-Meier方法估计各个数据集人群的生存曲线，结果如图\ref{pic02}所示。从图中我们可以直观地看出，SUPPORT数据集人群总体的生存状况相对而言是最差的，同时死亡风险非常高，且观测时间最短，而METABRIC数据集人群总体的生存状态最好，同时观测时间最长；ROTT2数据集人群生存状况稍差于METABRIC数据集，但又明显好于WHAS数据集。
+使用Kaplan-Meier方法 \citing{Kaplan1958Nonparametric}估计各个数据集人群的生存曲线，结果如图\ref{pic02}所示。从图中我们可以直观地看出，SUPPORT数据集人群总体的生存状况相对而言是最差的，同时死亡风险非常高，且观测时间最短；而METABRIC数据集人群总体的生存状态最好，同时观测时间最长；ROTT2数据集人群生存状况稍差于METABRIC数据集，但又明显好于WHAS数据集。
 
 \subsection{WHAS}
 
 WHAS \citing{Hosmer2000Applied}（Worcester Heart Attack Study）数据集收集了1638名心脏病患者，主要研究是否发生急性心肌梗塞（AMI），及疾病相关的影响因素。数据集中主要包含5个患者信息：年龄，性别，BMI，是否有左心衰竭并发症，心肌梗塞等级。在长达67个月的随访中，有42.12\%的患者发生了急性心肌梗塞导致的死亡。全部的观测个体中，观测时间最大的是67个月，观测时间最小的是1个月，观测时间中位数是40个月。
 
-使用Kaplan-Meier方法估计WHAS数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic03}所示。从图中可以看出，随着观测时间的增长，WHAS数据集中急性心肌梗塞的存活率呈线性下降的趋势。
+使用Kaplan-Meier方法 \citing{Kaplan1958Nonparametric}估计WHAS数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic03}所示。从图中可以看出，随着观测时间的增长，WHAS数据集中急性心肌梗塞的存活率呈线性下降的趋势。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic03.png}
@@ -291,7 +291,7 @@ WHAS \citing{Hosmer2000Applied}（Worcester Heart Attack Study）数据集收集
 
 SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcomes and Risks of Treatment）数据集大规模地收集了重病住院的成年人的临床数据，主要研究该类型患者的生存状态及影响因素。
 
-该数据集共有9015名患者，对应信息有14个：年龄，性别，种族，并发症数量，是否糖尿病，是否痴呆症，是否癌症，平均动脉血压，心率，呼吸频率，体温，白细胞数量，血清钠含量和血清肌酐含量。在排除了存在未知信息的个体后，我们总共收集了符合规范的8873名患者数据，其中68.03\%的患者在观测期间出现了死亡。这些患者的观测时间的最小值，中位数，和最大值分别是1个月，8个月和68个月。使用Kaplan-Meier方法估计SUPPORT数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic04}所示。从图中可以看出，SUPPORT数据集中的重病住院患者的生存率在前5个月出现急剧下降，而后下降趋势较为平稳，形状类似于与x轴对称的log曲线。
+该数据集共有9015名患者，对应信息有14个：年龄，性别，种族，并发症数量，是否糖尿病，是否痴呆症，是否癌症，平均动脉血压，心率，呼吸频率，体温，白细胞数量，血清钠含量和血清肌酐含量。在排除了存在未知信息的个体后，我们总共收集了符合规范的8873名患者数据，其中68.03\%的患者在观测期间出现了死亡。这些患者的观测时间的最小值，中位数，和最大值分别是1个月，8个月和68个月。使用Kaplan-Meier方法 \citing{Kaplan1958Nonparametric}估计SUPPORT数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic04}所示。从图中可以看出，SUPPORT数据集中的重病住院患者的生存率在前5个月出现急剧下降，而后下降趋势较为平稳，形状类似于与x轴对称的log曲线。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic04.png}
@@ -303,7 +303,7 @@ SUPPORT \citing{Knaus1995The}（Study to Understand Prognoses Preferences Outcom
 
 METABRIC \citing{Curtis2012The}（Molecular Taxonomy of Breast Cancer International Consortium）数据主要研究基因和蛋白质的表达信息对乳腺癌患者生存的影响，从而辅助医生制定更好的治疗方案。在原始的包含1980名乳腺癌患者的数据集中去除存在不完整信息的个体后，我们最终收集了1903名乳腺癌患者的数据，死亡率为57.96\%。
 
-和\cite{Katzman2018DeepSurv}中的做法一样，我们也保留了原始数据中的9个特征：基因MKI67，EGFR，PGR，ERBB2，雌性激素受体状态，是否放疗，是否化疗，ER状态，诊断时年龄。数据集中1903名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是1个月，115个月和356个月。使用Kaplan-Meier方法估计METABRIC数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic05}所示。从图中可以看出，METABRIC数据集中乳腺癌患者的生存率的下降趋势和WHAS数据集类似，与观察时间呈线性关系。
+和\cite{Katzman2018DeepSurv}中的做法一样，我们也保留了原始数据中的9个特征：基因MKI67，EGFR，PGR，ERBB2，雌性激素受体状态，是否放疗，是否化疗，ER状态，诊断时年龄。数据集中1903名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是1个月，115个月和356个月。使用Kaplan-Meier方法 \citing{Kaplan1958Nonparametric}估计METABRIC数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic05}所示。从图中可以看出，METABRIC数据集中乳腺癌患者的生存率的下降趋势和WHAS数据集类似，与观察时间呈线性关系。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic05.png}
@@ -321,7 +321,7 @@ ROTT2 \citing{Foekens2000The}（Rotterdam Tumor Bank）数据使用病人的病�
 \label{pic06}
 \end{figure}
 
-它随访了2982名经过了初次手术的女性乳腺癌患者，其中42.66\%的乳腺癌患者在随访的过程中出现了死亡。数据中收集的临床信息有9个：年龄，绝经状态，肿瘤大小，肿瘤分级，阳性淋巴细胞个数，PR，ER，是否激素治疗，是否化疗。数据集中2982名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是2个月，87个月和232个月。使用Kaplan-Meier方法估计ROTT2数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic06}所示。从图中可以看出，ROTT2数据集中乳腺癌患者的生存率在前200个月都呈线性下降，观察期后部分基本维持平稳。
+它随访了2982名经过了初次手术的女性乳腺癌患者，其中42.66\%的乳腺癌患者在随访的过程中出现了死亡。数据中收集的临床信息有9个：年龄，绝经状态，肿瘤大小，肿瘤分级，阳性淋巴细胞个数，PR，ER，是否激素治疗，是否化疗。数据集中2982名乳腺癌患者的观测时间的最小值，中位数，和最大值分别是2个月，87个月和232个月。使用Kaplan-Meier方法 \citing{Kaplan1958Nonparametric}估计ROTT2数据集人群的生存曲线（生存函数），同时统计在各个时间点仍处于观测期的人数，结果如图\ref{pic06}所示。从图中可以看出，ROTT2数据集中乳腺癌患者的生存率在前200个月都呈线性下降，观察期后部分基本维持平稳。
 
 \subsection{数据划分}
 
@@ -333,9 +333,9 @@ ROTT2 \citing{Foekens2000The}（Rotterdam Tumor Bank）数据使用病人的病�
 \label{pic19}
 \end{figure}
 
-数据划分的整体流程如图\ref{pic19}所示。具体地，我们采用随机划分的方式将各个数据集按照8:2的比例划分为训练集和测试集，同时使用统计方法检验随机划分后数据的分布是否一致。当某个差异显著性检验的P值大于0.05时，我们会设置一个新的随机数种子来重新进行数据划分，直到训练集和测试集中数据分布无显著差异。其中，在差异显著性检验阶段，连续变量使用KS检验，离散变量使用卡方检验，而生存状态的差异性检验采用logrank检验 \citing{Kalbfleisch1986The}。logrank检验的原假设是两个人群生存状态服从同一个分布。
+数据划分的整体流程如图\ref{pic19}所示。具体地，我们采用随机划分的方式将各个数据集按照8:2的比例划分为训练集和测试集，同时使用统计方法检验随机划分后数据的分布是否一致。当某个差异显著性检验的P值大于0.05时，我们会设置一个新的随机数种子来重新进行数据划分，直到训练集和测试集中数据分布无显著差异。其中，在差异显著性检验阶段，连续变量使用KS检验，离散变量使用卡方检验，而生存状态的差异性检验采用logrank检验。logrank检验的原假设是两个人群生存状态服从同一个分布 \citing{Kalbfleisch1986The}。
 
-按照上述流程对各个数据集完成划分后，表\ref{table02}给出了各个数据集划分出的训练集和测试集的统计情况，表\ref{table02}中P值给出的是对一个数据集划分出的训练数据和测试数据实施logrank检验的结果。从结果上可以看出，各个数据集的训练集和测试集在生存状态上无显著差异（P>0.05）。
+按照上述流程对各个数据集完成划分后，表\ref{table02}给出了各个数据集划分出的训练集和测试集的统计情况，表\ref{table02}中P值表示对一个数据集划分出的训练数据和测试数据实施logrank检验的结果。从结果上可以看出，各个数据集的训练集和测试集在生存状态上无显著差异（P>0.05）。
 
 \begin{table}[H]
 \caption{训练集和测试集的基本情况}
@@ -355,7 +355,7 @@ ROTT2                & 2385      & 42.73\%     & 597       & 42.38\%     & 0.995
 \section{实验结果}
 
 \subsection{实验设置}
-为了测试HitBoost生存分析方法的性能，我们在四个公开生存数据集上对比了生存分析中常用的方法。由于HitBoost方法不再遵循任何对个体风险函数的假设，目的在于使用多输出的梯度提升树建立个体风险函数与协变量之间潜在的关系，且有一定的模型解释性，所以我们将其与以下方法进行对比：
+为了测试HitBoost生存分析方法的性能，我们在四个公开生存数据集上对比了生存分析中常用的方法。因为HitBoost方法不再遵循任何对个体风险函数的假设，目的在于使用多输出的梯度提升树建立个体风险函数与协变量之间潜在的关系，且有一定的模型解释性，所以我们将其与以下方法进行对比：
 \begin{itemize}
   \item CoxPH，经典的Cox比例风险模型，遵循风险比例假设；
   \item CoxBoost，使用Boosting方法优化CoxPH模型，遵循风险比例假设；
@@ -395,7 +395,7 @@ $\theta$ & [0.5, 1.0] & 0.05 & 11 & $L_1$项系数 \\
 
 \subsection{模型性能}
 
-在完成上述的贝叶斯超参数优化后，我们使用参数优化的结果在各个数据集的训练集上训练了HitBoost模型，然后使用一致性指数，在独立的测试集上评估了模型的预测性能。由于HitBoost模型的输出为首次发生事件时间的概率分布，所以我们需要使用时间依赖的一致性指数（如式\eqref{F14}所示）指标来评估该模型的性能。而对于一类预测风险比例的模型，由于风险函数$h(t)$转化为首次发生事件时间的累积分布函数$F(t)$后，对于任何个体$i$，式 \eqref{F13}中计算一致性指数的预测风险$\hat{R}_i$与式 \eqref{F14}中计算时间依赖一致性指数的预测风险$\sum_{t<T_i} \hat{y}_t^i$ 在任意元组$(i,j)$中的相对大小关系不变，所以普通的一致性指数和时间依赖的一致性指数是等价的。
+在完成上述的贝叶斯超参数优化后，我们使用参数优化的结果在各个数据集的训练集上训练了HitBoost模型，然后在独立测试集上使用一致性指数评估了模型的预测性能。因为HitBoost模型的输出为首次发生事件时间的概率分布，所以我们需要使用时间依赖的一致性指数（如式\eqref{F14}所示）指标来评估该模型的性能。而对于一类预测风险比例的模型，因为风险函数$h(t)$转化为首次发生事件时间的累积分布函数$F(t)$后，对于任何个体$i$，式 \eqref{F13}中计算一致性指数的预测风险$\hat{R}_i$与式 \eqref{F14}中计算时间依赖一致性指数的预测风险$\sum_{t<T_i} \hat{y}_t^i$ 在任意元组$(i,j)$中的相对大小关系不变，所以普通的一致性指数和时间依赖的一致性指数是等价的。
 
 \begin{table}[h]
 \caption{HitBoost模型性能对比（星号“*”表示我们提出的方法）}
@@ -413,7 +413,7 @@ RSF & 0.913789 & 0.614945 & 0.650566 & 0.675589 \\
 \label{table04}
 \end{table}
 
-HitBoost方法以及用于对比的常用的生存分析方法，在各个数据集上的评估结果如表\ref{table04}所示。从表\ref{table04}我们可以看出，HitBoost方法在四个公开数据集上的预测性能都超过了其他的四种方法。在WHAS数据集中，HitBoost模型相比随机生存森林RSF模型在一致性指数上提升了大约1.7\%，并且RSF模型是四种常用的生存分析模型中性能最好的。类似地，在SUPPORT和METABRIC数据集上，HitBoost方法将一致性指数分别提升了大约2.7\%和2.8\%。只有在ROTT2数据集上，HitBoost方法的性能提升并不明显，只有大概1\%。从实验结果可以看出，HitBoost相比常用的生存分析方法有着更好的预测性能和风险区分度。在缺乏先验知识或生存数据分布未知的情况下，它不再遵循任何关于个体风险比例的假设，而是使用多输出的梯度提升树（构建在XGBoost之上）来直接学习协变量和风险函数之间的潜在关系。一方面，它抛弃了先验假设，有着更加广泛的适用场景；另外一方面，它可以使用梯度提升树生成过程中的统计量有效评估特征重要性，保证了模型的解释性。关于HitBoost模型解释性的介绍，我们将在第五章方法应用中给出。
+HitBoost方法以及用于对比的常用的生存分析方法，在各个数据集上的评估结果如表\ref{table04}所示。从表\ref{table04}我们可以看出，HitBoost方法在四个公开数据集上的预测性能都超过了其他的四种方法。在WHAS数据集中，HitBoost模型相比RSF模型，在一致性指数上提升了大约1.7\%，并且RSF模型是四种常用的生存分析模型中性能最好的。类似地，在SUPPORT和METABRIC数据集上，HitBoost方法相比第二好的RSF模型，将一致性指数分别提升了大约2.7\%和2.8\%。只有在ROTT2数据集上，HitBoost方法的性能提升并不明显，只有大概1\%。从实验结果可以看出，HitBoost相比常用的生存分析方法有着更好的预测性能和风险区分度。在缺乏先验知识或生存数据分布未知的情况下，它不再遵循任何关于个体风险比例的假设，而是使用多输出的梯度提升树（构建在XGBoost之上）来直接学习协变量和风险函数之间的潜在关系。一方面，它抛弃了先验假设，有着更加广泛的适用场景；另外一方面，它可以使用梯度提升树生成过程中的统计量有效评估特征重要性，保证了模型的解释性。关于HitBoost模型解释性的介绍，我们将在第五章方法应用中给出。
 
 \begin{figure}[H]
 \includegraphics[width=0.9\textwidth]{pic08.png}
@@ -421,7 +421,7 @@ HitBoost方法以及用于对比的常用的生存分析方法，在各个数据
 \label{pic08}
 \end{figure}
 
-为了观察HitBoost模型的拟合情况及稳定性，我们展示了它在各个数据集上的学习曲线，结果如图\ref{pic08}所示。为了充分地观察模型在每一步迭代时的拟合情况，只有迭代次数nrounds被统一设置为了160。图中曲线每个点的横坐标表示当前模型迭代次数，纵坐标表示当前拟合模型在测试集上的预测性能。曲线上的空心点表示了HitBoost模型最终在各个数据集上的实际停止迭代点，它是由贝叶斯超参数搜索得到的。从图\ref{pic08}可以看出，HitBoost模型在四个数据集上最终都趋于稳定，并未出现过拟合的现象。拟合各个数据集用到的模型超参数均来自于贝叶斯超参数优化搜索。
+为了观察HitBoost模型的拟合情况及稳定性，我们展示了它在各个数据集上的学习曲线，结果如图\ref{pic08}所示。为了充分地观察模型在每一步迭代时的拟合情况，只有迭代次数nrounds被统一设置为了160。图中曲线每个点的横坐标表示当前模型迭代次数，纵坐标表示当前拟合模型在测试集上的预测性能。曲线上的空心点表示了HitBoost模型最终在各个数据集上的实际停止迭代点，由贝叶斯超参数搜索得到的。从图\ref{pic08}可以看出，HitBoost模型在四个数据集上最终都趋于稳定，并未出现过拟合的现象。拟合各个数据集用到的模型超参数均来自于贝叶斯超参数优化搜索。
 
 \subsection{样例分析}
 
@@ -447,12 +447,12 @@ HitBoost方法以及用于对比的常用的生存分析方法，在各个数据
 \label{pic09}
 \end{figure}
 
-各个样本的估计生存函数及其他对比方法给出的估计生存函数值的可视化结果如图\ref{pic09}所示。由CoxPH，CoxBoost和ThresReg模型估计的生存函数曲线都是相对平滑的，因为它们都对个体风险函数做出了假设，服从某个固定的数学表达形式。对数据集WHAS，SUPPORT和ROTT2中的样本（分别如图\ref{pic09:a}，\ref{pic09:b}和\ref{pic09:d}），它们都在对应的观测时间点发生了事件，即$E=1$。由HitBoost模型估计的生存曲线在实际发生事件时间点（图中垂直虚线标记所示）出现了急剧的下降，这正好说明HitBoost模型预测在该观测时间点有着更高的事件发生风险。而CoxPH，CoxBoost和ThresReg模型估计的个体生存曲线在各个时间点都较为平缓，RSF模型估计的个体生存曲线虽然与HitBoost模型趋势大致相同，但是其下降幅度不如HitBoost模型。而且，HitBoost模型在该观测时间点估计的生存率比其他四个模型都要低，这与三个样本的实际观测情况更加相符。对METABRIC数据集中的样本（如图\ref{pic09:c}），它在整个观测期中没有发生事件，而是出现了失访，即$E=0$。不同于其他四个模型均对个体生存率过低估计的情况，HitBoost模型预测的个体生存函数在整个观测期都保持较高生存率的水平，这更加符合该患者实际的生存状态，即失访个体应该有更高的概率活过实际的失访时间。 
+各个样本的估计生存函数及其他对比方法给出的估计生存函数值的可视化结果如图\ref{pic09}所示。由CoxPH，CoxBoost和ThresReg模型估计的生存函数曲线都是相对平滑的，因为它们都假设个体风险函数为某个固定的数学表达式。对数据集WHAS，SUPPORT和ROTT2中的样本（分别如图\ref{pic09:a}，\ref{pic09:b}和\ref{pic09:d}），它们都在对应的观测时间点发生了事件，即$\delta=1$。由HitBoost模型估计的生存曲线在实际发生事件时间点（图中垂直虚线标记所示）出现了急剧的下降，这正好说明HitBoost模型预测在该观测时间点有着更高的事件发生风险。而CoxPH，CoxBoost和ThresReg模型估计的个体生存曲线在各个时间点都较为平缓。RSF模型估计的个体生存曲线虽然与HitBoost模型趋势大致相同，但是其下降幅度不如HitBoost模型。而且，HitBoost模型在该观测时间点估计的生存率比其他四个模型都要低，这与三个样本的实际观测情况更加相符。对METABRIC数据集中的样本（如图\ref{pic09:c}），它在整个观测期中没有发生事件，而是出现了失访，即$\delta=0$。不同于其他四个模型均对个体生存率过低估计的情况，HitBoost模型预测的个体生存函数在整个观测期都保持较高生存率的水平。这更加符合该患者实际的生存状态，即失访个体应该有更高的概率活过实际的失访时间。 
 
-本节的样例分析实验结果更加直观地给出了各个模型对个体生存函数的预测情况。从实验结果可以看出，我们提出的基于梯度提升树的生存分析优化方法HitBoost充分发挥了它不再遵循任何先验假设的优势，从而导致它在个体首次发生事件时间概率分布的预测上更加准确，所以HitBoost方法相比一类遵循先验假设的方法，还有随机生存森林，有着更好的风险区分度与预测性能。
+本节的样例分析实验结果更加直观地给出了各个模型对个体生存函数的预测情况。从实验结果可以看出，我们提出的基于梯度提升树的生存分析优化方法HitBoost充分发挥了抛弃先验假设的优势，使得它对个体首次发生事件时间概率分布的预测更加准确。所以，HitBoost方法相比一类遵循先验假设的方法以及随机生存森林，有着更好的风险区分度与预测性能。
 
 \section{本章小结}
 
-本章首先从模型框架和优化方法两个方面介绍了提出的HitBoost生存分析方法。简单来说，该方法基于传统的FHT首次命中时间模型，使用梯度提升树实现。具体地，HitBoost方法使用多输出的梯度提升树直接预测感兴趣的事件发生随时间的概率分布，并且把生存分析相关的极大似然估计函数作为目标函数，同时还另外加入凸函数近似的一致性指数来调整风险排序。一方面它不再对个体风险函数的形式做出任何假设，另一方面它作为决策树的拓展模型仍然具有一定的解释性。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型借助灵活且易拓展的XGBoost梯度提升树框架实现了提出的HitBoost生存分析方法。
+本章首先从模型框架和优化方法两个方面介绍了提出的HitBoost生存分析方法。简单来说，该方法基于传统的FHT首次命中时间模型，使用多输出的梯度提升树实现。具体地，HitBoost方法使用多输出的梯度提升树直接预测感兴趣的事件发生随时间的概率分布，并且把生存分析相关的极大似然估计函数作为目标函数，同时还另外加入凸函数近似的一致性指数来调整风险排序。一方面它不再对个体风险函数的形式做出任何假设，另一方面它作为决策树的拓展模型仍然具有一定的解释性。在模型实现上，我们首先推导了自定义的目标函数关于模型预测值的一阶梯度和二阶梯度，然后根据预测目标的类型借助灵活且易拓展的XGBoost梯度提升树框架实现了提出的HitBoost方法。
 
-然后，本章介绍了四个公开的生存数据集：WHAS，SUPPORT，METABRIC，ROTT2。主要从常用统计量和人群生存曲线的角度给出了数据集的基本情况。最后，本章给出了HitBoost方法在公开数据集上的实验结果。HitBoost预测模型的实验结果显示，在独立测试集的预测以及对个体生存函数的估计上，我们提出的基于梯度提升树的优化方法相比一类遵循风险假设的模型，以及随机生存森林来说，具有更好的预测性能及风险区分度。
+然后，本章介绍了四个公开的生存数据集：WHAS，SUPPORT，METABRIC，ROTT2。主要使用数据统计量和人群生存曲线来展示数据集的基本情况。最后，本章给出了HitBoost方法在公开数据集上的实验结果。实验结果显示，在个体生存函数的估计上，我们提出的基于梯度提升树的优化方法，相比一类遵循风险假设的模型以及随机生存森林来说，具有更好的预测性能及风险区分度。
