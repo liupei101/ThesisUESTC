@@ -428,22 +428,22 @@ HitBoost方法以及用于对比的常用的生存分析方法，在各个数据
 为了查看HitBoost生存分析方法对生存函数的估计情况，本节我们进行了样例分析实验。正如本章前文所介绍的，HitBoost生存分析方法的预测目标是首次发生事件时间的概率分布，HitBoost模型的直接输出也是首次发生事件时间的概率分布。而基于风险比例假设的模型的输出为风险比例，需要通过计算转化得到风险函数。本节的样例分析实验中，我们从四个数据集的测试集中各自随机地选择了一个样本，然后使用经过拟合的HitBoost模型预测各个样本的首次发生事件时间的概率分布，最后转换得到它们的估计生存函数。
 \begin{figure}[h]
 \centering 
-\subfigure[WHAS]{\label{pic09:a}
+\subfloat[]{\label{pic09:a}
 \includegraphics[width=0.45\textwidth]{pic09a.png}
 }
 \hspace{0.01\linewidth}
-\subfigure[SUPPORT]{\label{pic09:b}
+\subfloat[]{\label{pic09:b}
 \includegraphics[width=0.45\textwidth]{pic09b.png}
 }
 \vfill
-\subfigure[METABRIC]{\label{pic09:c}
+\subfloat[]{\label{pic09:c}
 \includegraphics[width=0.45\textwidth]{pic09c.png}
 }
 \hspace{0.01\linewidth}
-\subfigure[ROTT2]{\label{pic09:d}
+\subfloat[]{\label{pic09:d}
 \includegraphics[width=0.45\textwidth]{pic09d.png}
 }
-\caption{样例分析：不同数据集的个体生存函数估计}
+\caption{样例分析：不同数据集的个体生存函数估计。(a)\ WHAS；(b)\ SUPPORT；(c)\ METABRIC；(d)\ ROTT2}
 \label{pic09}
 \end{figure}
 
